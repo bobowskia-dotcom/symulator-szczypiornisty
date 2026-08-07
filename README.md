@@ -1,0 +1,2 @@
+# symulator-szczypiornisty
+Symulator Szczypiornisty
