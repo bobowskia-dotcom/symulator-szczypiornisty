@@ -343,7 +343,7 @@
         
         <button class="decision-btn" style="border-left: 4px solid var(--zprp-red);" onclick="resolveTournament('gladiator')">
             <strong>Tryb Gladiator (Zostawiam serce na parkiecie)</strong><br>
-            <span style="font-size:0.75rem; color:#666;">+30% szans na medal i nagrody MVP, ale OGROMNE ryzyko ciężkiej kontuzji po turnieju.</span>
+            <span style="font-size:0.75rem; color:#666;">Ogromne szanse na bramki i nagrody MVP, ale OGROMNE ryzyko ciężkiej kontuzji po turnieju.</span>
         </button>
         <button class="decision-btn" style="border-left: 4px solid #005a9c;" onclick="resolveTournament('normal')">
             <strong>Solidna gra (Zbalansowane zaangażowanie)</strong><br>
@@ -506,13 +506,15 @@
     let seasonStats = { goals: 0, assists: 0, finalPos: 0, awards: [] };
     let currentSeasonTable = [];
     let historyLog = [];
+    let cupLog = [];
+    let nationalTeamLog = [];
     let currentResolvedLeague = ""; 
 
-    // BAZA WYDARZEŃ LOSOWYCH Z 2 OPCJAMI DO WYBORU (MOŻESZ DODAWAĆ SWOJE!)
+    // BAZA WYDARZEŃ LOSOWYCH Z 2 OPCJAMI DO WYBORU
     const eventsDatabase = [
         {
             title: "Zgubiony bagaż przez linie lotnicze",
-            desc: "Lecisz na puchar bez swoich ulubionych i dopasowanych butów. Co robisz?",
+            desc: "Lecisz na mecz bez swoich ulubionych butów. Co robisz?",
             opt1: { label: "Gram w pożyczonych o rozmiar mniejszych", action: () => { player.injuryRisk += 15; player.media += 5; return "Doceniają Twoje poświęcenie (+5 Media), ale stopy krwawią (+15% Ryzyko urazu)."; } },
             opt2: { label: "Odmawiam gry w tym meczu", action: () => { player.prof -= 10; player.form -= 5; return "Trener wściekły (-10 Prof), spadek formy, ale zdrowie zachowane."; } }
         },
@@ -542,114 +544,217 @@
         }
     ];
 
-    // --- STREAMING_CHUNK:Massive Foreign Leagues Data ---
-    // Gigantyczna Baza Lig Zagranicznych z uwzględnieniem prawdziwej siły rankingowej
+    // --- NOWY POWER RANKING REPREZENTACJI ---
+    const nationalTeamsPowerRanking = [
+        // --- TIER 1: Światowi giganci (OVR 92-97) ---
+        { name: "Niemcy", code: "GER", tier: 1, strength: 97, worldPoints: 313, euroPoints: 3211 },
+        { name: "Szwecja", code: "SWE", tier: 1, strength: 95, worldPoints: 244, euroPoints: 394 },
+        { name: "Dania", code: "DEN", tier: 1, strength: 94, worldPoints: 211, euroPoints: 1426 },
+        { name: "Francja", code: "FRA", tier: 1, strength: 93, worldPoints: 194, euroPoints: 1728 },
+        { name: "Hiszpania", code: "ESP", tier: 1, strength: 91, worldPoints: 165, euroPoints: 1211 },
+        // --- TIER 2: Ścisła czołówka / Aspiranci (OVR 85-89) ---
+        { name: "Węgry", code: "HUN", tier: 2, strength: 89, worldPoints: 147, euroPoints: 1278 },
+        { name: "Serbia", code: "SRB", tier: 2, strength: 87, worldPoints: 177, euroPoints: 298 },
+        { name: "Chorwacja", code: "CRO", tier: 2, strength: 86, worldPoints: 119, euroPoints: 614 },
+        { name: "Portugalia", code: "POR", tier: 2, strength: 86, worldPoints: 9, euroPoints: 1035 },
+        { name: "Polska", code: "POL", tier: 2, strength: 85, worldPoints: 115, euroPoints: 969 },
+        { name: "Norwegia", code: "NOR", tier: 2, strength: 85, worldPoints: 58, euroPoints: 536 },
+        // --- TIER 3: Solidne zespoły europejskie i światowe (OVR 78-84) ---
+        { name: "Rosja", code: "RUS", tier: 3, strength: 84, worldPoints: 201, euroPoints: 31 },
+        { name: "Rumunia", code: "ROU", tier: 3, strength: 83, worldPoints: 134, euroPoints: 589 },
+        { name: "Macedonia Północna", code: "MKD", tier: 3, strength: 82, worldPoints: 17, euroPoints: 610 },
+        { name: "Islandia", code: "ISL", tier: 3, strength: 81, worldPoints: 97, euroPoints: 247 },
+        { name: "Słowenia", code: "SLO", tier: 3, strength: 80, worldPoints: 39, euroPoints: 439 },
+        { name: "Szwajcaria", code: "SUI", tier: 3, strength: 79, worldPoints: 45, euroPoints: 405 },
+        { name: "Czechy", code: "CZE", tier: 3, strength: 79, worldPoints: 87.5, euroPoints: 298 },
+        { name: "Egipt", code: "EGY", tier: 3, strength: 78, worldPoints: 65, euroPoints: 0 },
+        { name: "Austria", code: "AUT", tier: 3, strength: 78, worldPoints: 22, euroPoints: 242 },
+        // --- TIER 4: Uczestnicy i drużyny aspirujące (OVR 70-77) ---
+        { name: "Słowacja", code: "SVK", tier: 4, strength: 77, worldPoints: 68.5, euroPoints: 125 },
+        { name: "Grecja", code: "GRE", tier: 4, strength: 76, worldPoints: 10, euroPoints: 362 },
+        { name: "Bośnia i Hercegowina", code: "BIH", tier: 4, strength: 75, worldPoints: 2, euroPoints: 355 },
+        { name: "Tunezja", code: "TUN", tier: 4, strength: 75, worldPoints: 48, euroPoints: 0 },
+        { name: "Turcja", code: "TUR", tier: 4, strength: 74, worldPoints: 0, euroPoints: 246 },
+        { name: "Włochy", code: "ITA", tier: 4, strength: 74, worldPoints: 2, euroPoints: 205 },
+        { name: "Korea Południowa", code: "KOR", tier: 4, strength: 73, worldPoints: 41, euroPoints: 0 },
+        { name: "Argentyna", code: "ARG", tier: 4, strength: 73, worldPoints: 24, euroPoints: 0 },
+        { name: "Brazylia", code: "BRA", tier: 4, strength: 72, worldPoints: 20, euroPoints: 0 },
+        { name: "Czarnogóra", code: "MNE", tier: 4, strength: 72, worldPoints: 1, euroPoints: 93 },
+        { name: "Japonia", code: "JPN", tier: 4, strength: 71, worldPoints: 30, euroPoints: 0 },
+        { name: "Algieria", code: "ALG", tier: 4, strength: 70, worldPoints: 32, euroPoints: 0 },
+        { name: "Katar", code: "QAT", tier: 4, strength: 70, worldPoints: 21, euroPoints: 0 },
+        // --- TIER 5: Drużyny rozwijające się i kopciuszki (OVR 60-69) ---
+        { name: "Luksemburg", code: "LUX", tier: 5, strength: 69, worldPoints: 0, euroPoints: 185 },
+        { name: "Estonia", code: "EST", tier: 5, strength: 68, worldPoints: 0, euroPoints: 121 },
+        { name: "Litwa", code: "LTU", tier: 5, strength: 68, worldPoints: 6, euroPoints: 115 },
+        { name: "Finlandia", code: "FIN", tier: 5, strength: 67, worldPoints: 0, euroPoints: 108 },
+        { name: "Izrael", code: "ISR", tier: 5, strength: 67, worldPoints: 0, euroPoints: 106 },
+        { name: "Kosowo", code: "KOS", tier: 5, strength: 66, worldPoints: 0, euroPoints: 103 },
+        { name: "Cypr", code: "CYP", tier: 5, strength: 66, worldPoints: 0, euroPoints: 101 },
+        { name: "Wyspy Owcze", code: "FAR", tier: 5, strength: 65, worldPoints: 0, euroPoints: 77 },
+        { name: "Ukraina", code: "UKR", tier: 5, strength: 65, worldPoints: 12, euroPoints: 72 },
+        { name: "Kuba", code: "CUB", tier: 5, strength: 64, worldPoints: 25, euroPoints: 0 },
+        { name: "Kuwejt", code: "KUW", tier: 5, strength: 64, worldPoints: 14, euroPoints: 0 },
+        { name: "Arabia Saudyjska", code: "KSA", tier: 5, strength: 63, worldPoints: 9, euroPoints: 0 },
+        { name: "Maroko", code: "MAR", tier: 5, strength: 63, worldPoints: 8, euroPoints: 0 },
+        { name: "Azerbejdżan", code: "AZE", tier: 5, strength: 62, worldPoints: 0, euroPoints: 53 },
+        { name: "Holandia", code: "NED", tier: 5, strength: 62, worldPoints: 0, euroPoints: 47 },
+        { name: "Belgia", code: "BEL", tier: 5, strength: 62, worldPoints: 0, euroPoints: 44 },
+        { name: "Australia", code: "AUS", tier: 5, strength: 61, worldPoints: 7, euroPoints: 0 },
+        { name: "Stany Zjednoczone", code: "USA", tier: 5, strength: 61, worldPoints: 5, euroPoints: 0 },
+        { name: "Bułgaria", code: "BUL", tier: 5, strength: 60, worldPoints: 5, euroPoints: 2 },
+        { name: "Łotwa", code: "LAT", tier: 5, strength: 60, worldPoints: 0, euroPoints: 35 }
+    ];
+
     const foreignLeaguesData = {
-        "1. Bundesliga (Niemcy)": {
-            ihfTier: 1, strength: 96, cupName: "DHB-Pokal",
+        "Bundesliga (Niemcy)": {
+            ihfTier: 1, strength: 96,
             clubs: [
-                { name: "THW Kiel", strength: 97, cl: true }, { name: "SC Magdeburg", strength: 97, cl: true },
-                { name: "Füchse Berlin", strength: 95, cl: true }, { name: "SG Flensburg-Handewitt", strength: 94 },
-                { name: "Rhein-Neckar Löwen", strength: 91 }, { name: "MT Melsungen", strength: 89 },
-                { name: "TSV Hannover-Burgdorf", strength: 88 }, { name: "VfL Gummersbach", strength: 87 },
-                { name: "HSG Wetzlar", strength: 84 }, { name: "Frisch Auf Göppingen", strength: 85 },
-                { name: "TBV Lemgo", strength: 83 }, { name: "HC Erlangen", strength: 82 }
+                { name: "SC Magdeburg", strength: 96 }, { name: "Fuchse Berlin", strength: 95 },
+                { name: "Flensburg-H.", strength: 93 }, { name: "Gummersbach", strength: 86 },
+                { name: "Lemgo", strength: 85 }, { name: "Kiel", strength: 94 },
+                { name: "MT Melsungen", strength: 87 }, { name: "Rhein-Neckar", strength: 90 },
+                { name: "Goppingen", strength: 85 }, { name: "Hamburg", strength: 84 },
+                { name: "Hannover-Burgdorf", strength: 84 }, { name: "Stuttgart", strength: 81 },
+                { name: "Bergischer", strength: 78 }, { name: "Eisenach", strength: 76 },
+                { name: "Erlangen", strength: 76 }, { name: "HSG Wetzlar", strength: 77 },
+                { name: "Minden", strength: 75 }, { name: "Leipzig", strength: 76 }
             ]
         },
         "2. Bundesliga (Niemcy)": {
-            ihfTier: 3, strength: 78, cupName: "DHB-Pokal",
+            ihfTier: 2, strength: 74,
             clubs: [
-                { name: "HBW Balingen-Weilstetten", strength: 81 }, { name: "ASV Hamm-Westfalen", strength: 79 },
-                { name: "TuS N-Lübbecke", strength: 78 }, { name: "SG BBM Bietigheim", strength: 77 },
-                { name: "VfL Lübeck-Schwartau", strength: 76 }, { name: "HC Elbflorenz", strength: 75 }
+                { name: "HBW Balingen-Weilstetten", strength: 78 }, { name: "Bietigheim-Metterzimmern", strength: 77 },
+                { name: "Elbflorenz", strength: 75 }, { name: "Nordhorn-Lingen", strength: 75 },
+                { name: "Hagen", strength: 74 }, { name: "Potsdam", strength: 73 },
+                { name: "Lubeck-Schwartau", strength: 73 }, { name: "Huttenberg", strength: 73 },
+                { name: "Dessauer", strength: 72 }, { name: "Coburg 2000", strength: 72 },
+                { name: "N-Lubbecke", strength: 71 }, { name: "Essen", strength: 70 },
+                { name: "Dormagen", strength: 70 }, { name: "Ludwigshafen", strength: 69 },
+                { name: "Krefeld", strength: 69 }, { name: "Grosswallstadt", strength: 68 },
+                { name: "Ferndorf", strength: 66 }, { name: "Oppenweiler/Backnang", strength: 65 }
             ]
         },
-        "3. Liga (Niemcy)": {
-            ihfTier: 4, strength: 65, cupName: "DHB-Pokal",
+        "LNH StarLigue (Francja)": {
+            ihfTier: 1, strength: 94,
             clubs: [
-                { name: "HC Empor Rostock", strength: 70 }, { name: "Eintracht Hildesheim", strength: 69 },
-                { name: "TuS Vinnhorst", strength: 68 }, { name: "HSG Krefeld", strength: 66 }
+                { name: "PSG", strength: 96 }, { name: "Nantes", strength: 90 }, { name: "Montpellier", strength: 91 },
+                { name: "Limoges", strength: 82 }, { name: "Chambery Savoie", strength: 83 },
+                { name: "St. Raphael", strength: 84 }, { name: "Toulouse", strength: 84 },
+                { name: "Tremblay", strength: 79 }, { name: "Provence Aix", strength: 81 },
+                { name: "Cesson", strength: 78 }, { name: "Nimes", strength: 80 },
+                { name: "Selestat", strength: 76 }, { name: "Dunkerque", strength: 77 },
+                { name: "Chartres", strength: 76 }, { name: "Istres", strength: 75 }, { name: "Dijon", strength: 74 }
             ]
         },
-        "Starligue (Francja)": {
-            ihfTier: 1, strength: 94, cupName: "Coupe de France",
+        "ProLigue (Francja 2)": {
+            ihfTier: 2, strength: 73,
             clubs: [
-                { name: "Paris Saint-Germain HB", strength: 96, cl: true }, { name: "HBC Nantes", strength: 93, cl: true },
-                { name: "Montpellier HB", strength: 92, cl: true }, { name: "Fenix Toulouse", strength: 87 },
-                { name: "Chambéry Savoie", strength: 86 }, { name: "Saint-Raphaël", strength: 85 },
-                { name: "USAM Nîmes", strength: 84 }, { name: "Cesson Rennes", strength: 80 }
+                { name: "Saran", strength: 77 }, { name: "Ivry", strength: 76 }, { name: "Caen", strength: 76 },
+                { name: "Pontault", strength: 75 }, { name: "Pau Billere", strength: 75 }, { name: "Cherbourg", strength: 73 },
+                { name: "Valence", strength: 72 }, { name: "Creteil", strength: 72 }, { name: "Cournon d'Auvergne", strength: 71 },
+                { name: "Besancon", strength: 70 }, { name: "Frontignan", strength: 70 }, { name: "Sarrebourg", strength: 69 },
+                { name: "Saintes", strength: 69 }, { name: "Massy Essonne", strength: 68 }, { name: "Angers", strength: 67 }
             ]
         },
-        "Proligue (Francja)": {
-            ihfTier: 3, strength: 75, cupName: "Coupe de France",
+        "Division de Honor Plata (Hiszpania)": {
+            ihfTier: 2, strength: 72,
             clubs: [
-                { name: "Tremblay-en-France", strength: 79 }, { name: "Pontault-Combault", strength: 76 },
-                { name: "Dijon Métropole", strength: 75 }, { name: "Istres Provence", strength: 74 }
+                { name: "Proin Triana", strength: 76 }, { name: "Puerto Sagunto", strength: 75 },
+                { name: "Burgos", strength: 75 }, { name: "Agustinos Alicante", strength: 74 },
+                { name: "Anaitasuna", strength: 74 }, { name: "Eivissa", strength: 72 },
+                { name: "Barcelona II", strength: 72 }, { name: "OAR Coruna", strength: 72 },
+                { name: "BM Sinfin", strength: 71 }, { name: "Benidorm", strength: 70 },
+                { name: "Cisne", strength: 70 }, { name: "Contazara Zaragoza", strength: 69 },
+                { name: "Oviedo", strength: 68 }, { name: "Balonmano Soria", strength: 68 },
+                { name: "Malaga", strength: 66 }, { name: "Alcobendas", strength: 65 }
             ]
         },
-        "Liga ASOBAL (Hiszpania)": {
-            ihfTier: 1, strength: 89, cupName: "Copa del Rey",
+        "Herre Håndbold Ligaen (Dania)": {
+            ihfTier: 1, strength: 90,
             clubs: [
-                { name: "FC Barcelona Handbol", strength: 98, cl: true }, { name: "Bidasoa Irún", strength: 84 },
-                { name: "Fraikin BM Granollers", strength: 83 }, { name: "Ademar León", strength: 82 },
-                { name: "BM Logroño La Rioja", strength: 81 }, { name: "BM Cuenca", strength: 80 }
-            ]
-        },
-        "División de Honor Plata (Hiszp)": {
-            ihfTier: 4, strength: 68, cupName: "Copa del Rey",
-            clubs: [ { name: "BM Burgos", strength: 72 }, { name: "BM Guadalajara", strength: 71 }, { name: "Los Dólmenes", strength: 68 } ]
-        },
-        "Herreligaen (Dania)": {
-            ihfTier: 2, strength: 91, cupName: "Santander Cup",
-            clubs: [
-                { name: "Aalborg Håndbold", strength: 95, cl: true }, { name: "GOG Håndbold", strength: 92, cl: true },
-                { name: "Bjerringbro-Silkeborg", strength: 88 }, { name: "Skjern Håndbold", strength: 87 },
-                { name: "TTH Holstebro", strength: 85 }, { name: "Mors-Thy Håndbold", strength: 84 }
-            ]
-        },
-        "1. division (Dania)": {
-            ihfTier: 4, strength: 70, cupName: "Santander Cup",
-            clubs: [ { name: "Grindsted GIF", strength: 74 }, { name: "HØJ Elite", strength: 73 }, { name: "Skive fH", strength: 71 } ]
-        },
-        "REMA 1000-ligaen (Norwegia)": {
-            ihfTier: 2, strength: 86, cupName: "NM Cup",
-            clubs: [
-                { name: "Kolstad Håndball", strength: 91, cl: true }, { name: "Elverum Håndball", strength: 88 },
-                { name: "Drammen HK", strength: 84 }, { name: "Runar Sandefjord", strength: 83 }
+                { name: "Aalborg", strength: 93 }, { name: "Skanderborg AGF", strength: 83 },
+                { name: "GOG", strength: 88 }, { name: "Holstebro", strength: 81 },
+                { name: "Skjern", strength: 85 }, { name: "Mors", strength: 80 },
+                { name: "Bjerringbro/Silkeborg", strength: 85 }, { name: "Fredericia", strength: 82 },
+                { name: "Ribe-Esbjerg", strength: 80 }, { name: "Nordsjælland", strength: 78 },
+                { name: "Ringsted", strength: 77 }, { name: "Sønderjyske", strength: 77 },
+                { name: "HOJ", strength: 76 }, { name: "Grindsted", strength: 72 }
             ]
         },
         "NB I (Węgry)": {
-            ihfTier: 2, strength: 88, cupName: "Magyar Kupa",
+            ihfTier: 1, strength: 88,
             clubs: [
-                { name: "Telekom Veszprém", strength: 96, cl: true }, { name: "Pick Szeged", strength: 94, cl: true },
-                { name: "MOL Tatabánya", strength: 82 }, { name: "Ferencvárosi TC", strength: 81 },
-                { name: "Balatonfüredi KSE", strength: 80 }, { name: "Csurgói KK", strength: 78 }
+                { name: "Veszprem", strength: 95 }, { name: "Szeged", strength: 92 },
+                { name: "Tatabanya", strength: 80 }, { name: "Ferencvaros", strength: 79 },
+                { name: "Balatonfuredi", strength: 78 }, { name: "NEKA", strength: 77 },
+                { name: "PLER", strength: 76 }, { name: "Gyor", strength: 75 },
+                { name: "Gyongyosi", strength: 75 }, { name: "Csurgoi", strength: 74 },
+                { name: "Budai Farkasok", strength: 73 }, { name: "Szigetszentmiklosi", strength: 72 },
+                { name: "Komloi", strength: 73 }, { name: "Budakalasz", strength: 72 }
+            ]
+        },
+        "Handballigan (Szwecja)": {
+            ihfTier: 2, strength: 84,
+            clubs: [
+                { name: "Kristianstad", strength: 84 }, { name: "Malmo", strength: 83 },
+                { name: "Hammarby", strength: 81 }, { name: "Skövde", strength: 82 },
+                { name: "Alingsås", strength: 81 }, { name: "Savehof", strength: 85 },
+                { name: "Ystads IF", strength: 83 }, { name: "Karlskrona", strength: 79 },
+                { name: "Onnered", strength: 78 }, { name: "Amo HK", strength: 76 },
+                { name: "Hallby", strength: 76 }, { name: "Helsingborg", strength: 75 },
+                { name: "Vasteras Irsta HF", strength: 72 }, { name: "Guif", strength: 71 }
+            ]
+        },
+        "REMA 1000-ligaen (Norwegia)": {
+            ihfTier: 2, strength: 83,
+            clubs: [
+                { name: "Elverum", strength: 86 }, { name: "Kolstad", strength: 89 },
+                { name: "Bergen", strength: 80 }, { name: "Drammen", strength: 80 },
+                { name: "Runar", strength: 81 }, { name: "Sandefjord TIF", strength: 78 },
+                { name: "Naerbo", strength: 77 }, { name: "Fjellhammer", strength: 76 },
+                { name: "Arendal", strength: 78 }, { name: "Kristiansand", strength: 76 },
+                { name: "Follo", strength: 74 }, { name: "Sandnes", strength: 73 },
+                { name: "Halden", strength: 73 }, { name: "Baekkelaget", strength: 72 }
+            ]
+        },
+        "Premijer Liga (Region / Bałkany)": {
+            ihfTier: 2, strength: 79,
+            clubs: [
+                { name: "Izvidac", strength: 84 }, { name: "Borac", strength: 83 },
+                { name: "Sloga Doboj", strength: 82 }, { name: "Konjuh", strength: 79 },
+                { name: "Vogosca", strength: 78 }, { name: "Zrinjski Mostar", strength: 77 },
+                { name: "Krivaja", strength: 77 }, { name: "Gorazde", strength: 75 },
+                { name: "Gracanica", strength: 74 }, { name: "Maglaj", strength: 74 },
+                { name: "Bosna Visoko", strength: 74 }, { name: "Derventa", strength: 72 },
+                { name: "Sloboda Tuzla", strength: 70 }, { name: "Leotar", strength: 69 }
+            ]
+        },
+        "1. NL (Słowenia)": {
+            ihfTier: 2, strength: 81,
+            clubs: [
+                { name: "Slovan", strength: 81 }, { name: "Trimo Trebnje", strength: 79 },
+                { name: "Celje", strength: 86 }, { name: "Gorenje", strength: 82 },
+                { name: "Slovenj Gradec", strength: 77 }, { name: "Krka", strength: 76 },
+                { name: "Jeruzalem Ormoz", strength: 75 }, { name: "Loka", strength: 75 },
+                { name: "Ribnica", strength: 76 }, { name: "Skofljica", strength: 72 },
+                { name: "Ivancna Gorica", strength: 71 }, { name: "Radovljica", strength: 70 }
             ]
         },
         "Andebol 1 (Portugalia)": {
-            ihfTier: 2, strength: 85, cupName: "Taça de Portugal",
+            ihfTier: 2, strength: 81,
             clubs: [
-                { name: "Sporting CP", strength: 90, cl: true }, { name: "FC Porto", strength: 89, cl: true },
-                { name: "SL Benfica", strength: 87 }, { name: "ABC Braga", strength: 78 }
+                { name: "Sporting", strength: 87 }, { name: "Porto", strength: 88 },
+                { name: "Benfica", strength: 85 }, { name: "Aguas Santas", strength: 80 },
+                { name: "Maritimo", strength: 79 }, { name: "ABC Braga", strength: 78 },
+                { name: "Povoa", strength: 77 }, { name: "Belenenses", strength: 75 },
+                { name: "Vitoria SC", strength: 74 }, { name: "Avanca", strength: 73 },
+                { name: "Gaia", strength: 73 }, { name: "Arsenal", strength: 68 }
             ]
-        },
-        "Extraliga (Czechy)": {
-            ihfTier: 3, strength: 76, cupName: "Český Pohár",
-            clubs: [ { name: "HC Baník Karviná", strength: 79 }, { name: "Talent Plzeň", strength: 78 }, { name: "HC Zubří", strength: 75 } ]
-        },
-        "Extraliga (Słowacja)": {
-            ihfTier: 4, strength: 72, cupName: "Slovenský Pohár",
-            clubs: [ { name: "Tatran Prešov", strength: 82 }, { name: "MŠK Považská Bystrica", strength: 73 }, { name: "HK Bojnice", strength: 70 } ]
-        },
-        "HLA Meisterliga (Austria)": {
-            ihfTier: 3, strength: 77, cupName: "ÖHB-Cup",
-            clubs: [ { name: "Fivers Margareten", strength: 80 }, { name: "ALPLA HC Hard", strength: 79 }, { name: "Bregenz Handball", strength: 78 } ]
         }
     };
 
-    // --- STREAMING_CHUNK:Polish Leagues Data ---
-    // Nienaruszona Baza ZPRP
-   const polishLeaguesData = {
+    const polishLeaguesData = {
         "II Liga Mężczyzn - Gr. 1": [
             { name: "LKS PR OSiR Komprachcice", strength: 42 }, { name: "UKS Hagard Strzałkowo", strength: 40 },
             { name: "KS SPR Oleśnica", strength: 41 }, { name: "SPR Włoszakowice", strength: 39 },
@@ -726,7 +831,6 @@
         return "II Liga Mężczyzn - Gr. 3"; 
     }
 
-    // --- STREAMING_CHUNK:Career Setup & Initial Offers ---
     function setBestAchievement(title, tier) {
         if (tier > player.bestAchievementTier) {
             player.bestAchievementTier = tier;
@@ -758,7 +862,6 @@
         let group1BList = polishLeaguesData["I Liga Mężczyzn - Gr. B"] || [];
         let centralList = polishLeaguesData["Liga Centralna"] || [];
 
-        // Losowanie ofert z zachowaniem oryginalnej struktury ZPRP
         let localTeamObj = groupList[Math.floor(Math.random() * groupList.length)] || {name: "Klub Lokalny", strength: 42};
         let higherTeamObj = group1BList[Math.floor(Math.random() * group1BList.length)] || {name: "Klub I Ligi", strength: 58};
         let centralTeamObj = centralList[Math.floor(Math.random() * centralList.length)] || {name: "Klub Centralny", strength: 68};
@@ -800,7 +903,6 @@
         player.teamOVR = tOvr;
         player.salaryNum = salary;
         
-        // Zabezpieczenie przed błędem, jeśli kliknięto topowy klub (który nominalnie gra w LM)
         let isForeign = !!foreignLeaguesData[league];
         let pData = isForeign ? foreignLeaguesData[league].clubs : polishLeaguesData[league];
         let clubData = pData.find(c => c.name === club);
@@ -815,7 +917,6 @@
         checkRehabBanner();
     }
 
-    // --- STREAMING_CHUNK:Sidebar and Rehab Mechanics ---
     function updateSidebar() {
         document.getElementById('sidebar-name').innerText = player.name;
         document.getElementById('sidebar-voivodeship').innerText = player.voivodeship.toUpperCase();
@@ -875,9 +976,8 @@
         else player.formTrend = "stabilna";
     }
 
-    // --- STREAMING_CHUNK:Core Season Simulation ---
     function playSeason() {
-        seasonStats.awards = []; // Reset nagród
+        seasonStats.awards = []; 
         let trainingSelect = document.getElementById('training-focus-select');
         let selectedStat = trainingSelect ? trainingSelect.value : 'gra1v1';
         let statIncrease = Math.floor(Math.random() * 3) + 1;
@@ -901,7 +1001,6 @@
         let totalTeamsCount = leagueTeams.length;
         let fullMatches = (totalTeamsCount - 1) * 2;
 
-        // Kontuzja
         let injuryRoll = Math.random() * 100;
         let gotInjured = (injuryRoll < player.injuryRisk);
         let injuryNote = "";
@@ -922,7 +1021,6 @@
         player.careerStats.goals += goals;
         player.careerStats.assists += assists;
 
-        // Starzenie, Stagnacja i Wzrost OVR
         let leagueBaseOVR = 42;
         if (player.league.includes("I Liga")) leagueBaseOVR = 56;
         if (player.league.includes("Centralna")) leagueBaseOVR = 68;
@@ -951,11 +1049,9 @@
         player.totalEarned += player.salaryNum * 12;
         player.historyPoints += 25;
 
-        // Symulacja Tabeli Ligi
         let baseTeamOVR = player.teamOVR || leagueBaseOVR;
         let ovrDiff = player.ovr - baseTeamOVR;
         
-        // Zgodnie z poleceniem - pozycja ma znaczenie (Bramkarz i Środek mocniej carrują)
         let posMultiplier = (player.position === "GK" || player.position === "CTR") ? 1.5 : 0.7; 
         let carryMultiplier = player.league.includes("II Liga") ? 1.2 : (player.league.includes("I Liga") ? 0.6 : 0.2);
 
@@ -968,7 +1064,7 @@
             let isPlayerTeam = (teamName === player.club);
             
             let finalBaseStrength = baseStrength;
-            if (teamName === "ORLEN Wisła Płock" || teamName === "Industria Kielce" || teamName === "THW Kiel" || teamName === "FC Barcelona Handbol") {
+            if (teamName === "ORLEN Wisła Płock" || teamName === "Industria Kielce" || teamName === "Kiel" || teamName === "SC Magdeburg" || teamName === "PSG" || teamName === "FC Barcelona Handbol") {
                 finalBaseStrength = Math.max(baseStrength, 91);
             }
 
@@ -985,7 +1081,6 @@
         currentSeasonTable.sort((a, b) => b.pts - a.pts);
         seasonStats.finalPos = currentSeasonTable.findIndex(t => t.name === player.club) + 1;
 
-        // --- STREAMING_CHUNK:Handling Champions, Relegations & Champions League ---
         player.isChampion = false;
         player.isPlayoffSpot = false;
         player.isRelegated = false;
@@ -1027,7 +1122,6 @@
 
         historyLog.push(`<strong>${player.age} LAT (${player.currentYear})</strong> — ${player.club}: Miejsce ${seasonStats.finalPos} • ${promotionText}${injuryNote}`);
 
-        // GALA NAGRÓD
         if (!gotInjured && goals > playedMatches * 5) {
             seasonStats.awards.push("Król Strzelców");
             player.historyPoints += 30;
@@ -1039,14 +1133,13 @@
 
         updateFormAfterSeason(seasonStats.finalPos, totalTeamsCount);
 
-        // PUCHARY I REPREZENTACJA
         let cupResult = simulateDomesticCup(isForeignLeague);
         let clResult = null;
         
         if (player.qualifiedForCL) {
             clResult = simulateChampionsLeague();
         }
-        player.qualifiedForCL = willPlayCLNextYear; // Zapisz kwali na przyszły sezon
+        player.qualifiedForCL = willPlayCLNextYear; 
 
         player.pendingTournamentData = checkNationalCallup();
 
@@ -1060,7 +1153,6 @@
             cupResult: cupResult, clResult: clResult
         };
 
-        // Jeśli MŚ lub EURO wzywa - zatrzymaj na oknie decyzyjnym. Inaczej od razu podsumowanie.
         if (player.pendingTournamentData && player.pendingTournamentData.isMajorTournament) {
             document.getElementById('subscreen-preseason').style.display = 'none';
             document.getElementById('screen-tournament-decision').style.display = 'block';
@@ -1070,19 +1162,20 @@
         }
     }
 
-    // --- STREAMING_CHUNK:Cup and Champions League Simulations ---
     function simulateDomesticCup(isForeign) {
-        let cupName = isForeign ? (foreignLeaguesData[player.league].cupName || "Krajowy Puchar") : "Puchar Polski";
+        let cupName = isForeign ? "Krajowy Puchar" : "Puchar Polski";
+        if (isForeign && player.league.includes("Niemcy")) cupName = "DHB-Pokal";
+        if (isForeign && player.league.includes("Francja")) cupName = "Coupe de France";
+
         let rounds = ["1/16 finału", "1/8 finału", "Ćwierćfinał", "Półfinał", "FINAŁ"];
         
         let pool = [];
         if (isForeign) {
-            // Zbuduj pulę pucharową z całego kraju gracza (wszystkie szczeble, jeśli mamy kilka lig w tym samym kraju)
             let countryTag = player.league.split("(")[1];
             Object.entries(foreignLeaguesData).forEach(([lname, ldata]) => {
                 if (lname.includes("(" + countryTag)) pool.push(...ldata.clubs);
             });
-            if (pool.length === 0) pool = foreignLeaguesData[player.league].clubs; // fallback
+            if (pool.length === 0) pool = foreignLeaguesData[player.league].clubs; 
         } else {
             Object.values(polishLeaguesData).forEach(leagueArr => pool.push(...leagueArr));
         }
@@ -1099,7 +1192,7 @@
             let oppPool = pool;
             if (!isForeign) {
                 if (i >= 2) oppPool = pool.filter(t => t.strength > 60);
-                if (i >= 3) oppPool = pool.filter(t => t.strength > 80); // W półfinale potęgi
+                if (i >= 3) oppPool = pool.filter(t => t.strength > 80); 
                 if (oppPool.length === 0) oppPool = pool;
             }
 
@@ -1127,10 +1220,9 @@
         let won = false;
         let exitStage = "Faza Grupowa";
 
-        let clOpponents = ["THW Kiel", "SC Magdeburg", "Paris Saint-Germain HB", "HBC Nantes", "FC Barcelona Handbol", "Aalborg Håndbold", "GOG Håndbold", "Telekom Veszprém", "Pick Szeged", "Sporting CP"];
+        let clOpponents = ["Kiel", "SC Magdeburg", "PSG", "Nantes", "FC Barcelona Handbol", "Aalborg", "GOG", "Veszprem", "Szeged", "Sporting"];
         function getClOpp() { return clOpponents[Math.floor(Math.random() * clOpponents.length)]; }
 
-        // Grupowa - 14 spotkań
         let clAvgGrpStrength = 85;
         let pts = 0;
         let grpOpps = [getClOpp(), getClOpp(), getClOpp()];
@@ -1142,11 +1234,10 @@
         matchLog.push(`<strong>Faza Grupowa:</strong> Rywalizacja m.in. z ${grpOpps[0]}, ${grpOpps[1]}. Zdobyto ${pts} pkt.`);
 
         if (pts > 14) {
-            // Awans do fazy pucharowej
             let stages = ["1/8 finału", "Ćwierćfinał", "Półfinał (FINAL4)", "FINAŁ LM"];
             won = true;
             for(let i=0; i<stages.length; i++) {
-                let oppStr = 88 + (i * 2); // Rywale coraz trudniejsi
+                let oppStr = 88 + (i * 2); 
                 let winChance = 0.5 + ((teamStrength - oppStr) / 100);
                 let isWin = Math.random() < winChance;
                 let score = isWin ? `32:29` : `28:31`;
@@ -1161,7 +1252,6 @@
             player.historyPoints += 200;
         }
 
-        // Top 5 Goals / Saves (losowa nagroda na arenie europejskiej)
         if (pts > 10 && Math.random() < 0.2) {
             seasonStats.awards.push(`EHF Top 5 ${player.position === 'GK' ? 'Saves' : 'Goals'}`);
             player.media += 15;
@@ -1170,7 +1260,6 @@
         return { won: won, resultLabel: won ? "ZWYCIĘZCA LIGI MISTRZÓW!" : `Odpadł: ${exitStage}`, logHtml: matchLog.join("<br>") };
     }
 
-    // --- STREAMING_CHUNK:National Team Mechanics ---
     function checkNationalCallup() {
         player.national.called = false;
         let roleTier = "Brak powołania";
@@ -1190,7 +1279,6 @@
         
         let data = { roleTier, windowMatches, windowGoals, isMajorTournament: false, tournamentName: "" };
 
-        // Jeśli to kadra A i rok parzysty/nieparzysty
         if (roleTier === "Kadra A (Seniorzy)") {
             if (player.currentYear % 2 === 0) {
                 data.isMajorTournament = true;
@@ -1210,39 +1298,43 @@
         let outcomeMsg = "";
         let medal = false;
 
-        // Pula Przeciwników z prawdziwego Topu
-        let ntPool = ["Francja", "Dania", "Szwecja", "Niemcy", "Hiszpania", "Norwegia", "Islandia", "Chorwacja", "Egipt", "Węgry", "Słowenia", "Portugalia"];
-        function getNTOpp() { return ntPool.splice(Math.floor(Math.random() * ntPool.length), 1)[0] || "Serbia"; }
+        let ntPool = [...nationalTeamsPowerRanking].filter(t => t.name !== "Polska");
+        function getNTOpp() { 
+            if(ntPool.length === 0) return "Zespół X";
+            return ntPool.splice(Math.floor(Math.random() * ntPool.length), 1)[0].name; 
+        }
 
-        let baseChance = (player.ovr - 70) / 50; 
-        let gladiatorBonus = mode === 'gladiator' ? 0.3 : (mode === 'normal' ? 0.1 : -0.2);
-        let runChance = baseChance + gladiatorBonus + Math.random();
+        let basePolska = 85 + (player.ovr - 80) * 0.5;
+        let runChance = Math.random() * 100;
+        
+        if (mode === 'gladiator') basePolska += 10;
+        if (mode === 'rest') basePolska -= 15;
 
         let stageReached = "";
         let matchesPlayed = 0;
         let tMatchLog = [];
 
-        if (runChance < 0.5) {
+        if (basePolska < 75 || runChance < 20) {
             stageReached = "Faza Grupowa (Odpadnięcie)";
             matchesPlayed = 3;
             tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
             tMatchLog.push(`vs ${getNTOpp()} (WYGRANA)`);
             tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
             outcomeMsg = "Szybki powrót po słabej fazie grupowej.";
-        } else if (runChance < 0.9) {
+        } else if (runChance < 50) {
             stageReached = "Faza Zasadnicza / Runda Główna";
             matchesPlayed = 5;
             tMatchLog.push(`Grupa: Awans (2 wygrane, 1 porażka)`);
             tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (PORAŻKA)`);
             tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (REMIS)`);
             outcomeMsg = "Solidny turniej, ale brakło jakości na ćwierćfinał.";
-        } else if (runChance < 1.3) {
+        } else if (runChance < 75) {
             stageReached = "Ćwierćfinał";
             matchesPlayed = 7;
             tMatchLog.push(`Faza grupowa i zasadnicza: Pewny awans!`);
             tMatchLog.push(`Ćwierćfinał vs ${getNTOpp()} (PORAŻKA po walce)`);
             outcomeMsg = "Polska w najlepszej ósemce! Odpadacie w 1/4 finału.";
-        } else if (runChance < 1.6) {
+        } else if (runChance < 90) {
             stageReached = "Półfinał (Brak Medalu)";
             matchesPlayed = 9;
             tMatchLog.push(`Grupa/Zasadnicza: Dominacja!`);
@@ -1265,7 +1357,7 @@
 
         if (mode === 'gladiator') {
             player.injuryRisk += 25; player.form -= 15;
-            if (medal) { player.media += 25; seasonStats.awards.push("All-Star Team " + tName); }
+            if (medal || matchesPlayed >= 7) { player.media += 25; seasonStats.awards.push("All-Star Team " + tName); }
         } else if (mode === 'normal') {
             player.injuryRisk += 5;
         } else if (mode === 'rest') {
@@ -1278,32 +1370,27 @@
             <strong>Decyzja:</strong> ${mode.toUpperCase()} - ${outcomeMsg}<br>
             <div style="margin-top:8px; border-top:1px solid #ccc; padding-top:8px;">
                 <strong>Etap:</strong> ${stageReached}<br>
-                <strong>Mecze Polaków:</strong><br>
+                <strong>Rozegrane mecze:</strong> ${matchesPlayed} | <strong>Rzucone bramki:</strong> ${tGoals}<br>
+                <strong>Kluczowe spotkania:</strong><br>
                 <span style="font-size:0.75rem; color:#555;">${tMatchLog.join("<br>")}</span>
             </div>
         `;
         
-        // Zapisz do stats przed renderem
         player.national.caps += matchesPlayed;
         player.national.goals += tGoals;
 
         renderPostSeasonScreen(true);
     }
 
-    // Korekta struktury: aby resolveTournament miał pełne dane posezonowe, cache'ujemy je.
     let cachedSeasonRender = {};
     
-    // --- STREAMING_CHUNK:Post-Season Render & Awards ---
     function renderPostSeasonScreen(m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult) {
         if (m === true) { 
-            // Odczyt z cache jeśli wywołane po oknie turniejowym
             ({m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult} = cachedSeasonRender);
         } else if (m !== undefined) { 
-            // Cache'owanie przy klasycznym wywołaniu
             cachedSeasonRender = {m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult};
         }
 
-        // NAPRAWA BŁĘDU NAKŁADANIA EKRANÓW:
         document.getElementById('subscreen-preseason').style.display = 'none';
         
         document.getElementById('panel-main-title').innerText = "Podsumowanie Sezonu";
@@ -1323,21 +1410,18 @@
         });
         tableHtml += `</table>`;
 
-        // Puchar Krajowy HTML
         let cupHtml = `<div style="background:var(--zprp-gray); border:1px solid var(--zprp-border); padding:15px; margin-bottom:15px; border-radius:4px;">
             <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px;">🏆 ${cupResult.name}</div>
             <strong style="font-size:0.95rem; color:var(--zprp-red);">${cupResult.resultLabel}</strong>
             <div style="font-size:0.8rem; margin-top:8px; line-height:1.4;">${cupResult.logHtml}</div>
         </div>`;
 
-        // Liga Mistrzów HTML
         let clHtml = clResult ? `<div style="background:#fffdf0; border:1px solid #e0d060; border-left: 4px solid #d4af37; padding:15px; margin-bottom:15px; border-radius:4px;">
             <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px; color:#856404;">🇪🇺 EHF Champions League</div>
             <strong style="font-size:0.95rem;">${clResult.resultLabel}</strong>
             <div style="font-size:0.8rem; margin-top:8px; line-height:1.4;">${clResult.logHtml}</div>
         </div>` : "";
 
-        // Reprezentacja HTML
         let repHtml = "";
         if (player.pendingTournamentData) {
             let pd = player.pendingTournamentData;
@@ -1348,7 +1432,6 @@
             </div>`;
         }
 
-        // Nagrody Indywidualne HTML
         let awardsHtml = "";
         if (seasonStats.awards.length > 0) {
             awardsHtml = `<div style="background:#fef9e7; border:1px solid #f1c40f; padding:15px; margin-bottom:15px; border-radius:4px; text-align:center;">
@@ -1357,7 +1440,6 @@
             </div>`;
         }
 
-        // Wydarzenia Losowe (2 opcje)
         let pendingEvent = eventsDatabase[Math.floor(Math.random() * eventsDatabase.length)];
         let decisionHtml = `
             <div class="decision-box">
@@ -1413,9 +1495,7 @@
         updateSidebar();
     }
 
-    // --- STREAMING_CHUNK:Transfer Market & Retirement ---
     function calculateRealisticSalary(targetLeagueName, ovr) {
-        // System widełek płacowych
         let base = 500; let mult = 10;
         if (targetLeagueName.includes("II Liga")) { base = 500; mult = 30; }
         else if (targetLeagueName.includes("I Liga")) { base = 1500; mult = 80; }
@@ -1435,7 +1515,6 @@
     }
 
     function openTransferMarket() {
-        // NAPRAWA BŁĘDU NAKŁADANIA EKRANÓW W RYNKU TRANSFEROWYM:
         document.getElementById('subscreen-preseason').style.display = 'none';
         
         document.getElementById('subscreen-postseason').style.display = 'none';
@@ -1458,8 +1537,20 @@
         let isForeign = !!foreignLeaguesData[player.league];
         currentResolvedLeague = player.league;
         
-        // Obliczanie ligi dla opcji Zostaję w Polsce (Spadki/Awansy)
-        if (!isForeign) {
+        if (isForeign) {
+            let countryTagMatch = player.league.match(/\(([^)]+)\)/);
+            let countryTag = countryTagMatch ? countryTagMatch[1] : "";
+            let currentTier = foreignLeaguesData[player.league].ihfTier;
+
+            if (player.isChampion) {
+                let higherLeague = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === currentTier - 1);
+                if (higherLeague) currentResolvedLeague = higherLeague;
+            } else if (player.isRelegated) {
+                let lowerLeague = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === currentTier + 1);
+                if (lowerLeague) currentResolvedLeague = lowerLeague;
+                else player.isRelegated = false; // Brak niższej ligi
+            }
+        } else {
             if (player.isChampion) {
                 if (player.league.includes("II Liga")) {
                     if (["pomorskie", "kujawsko-pomorskie", "warmińsko-mazurskie", "zachodniopomorskie"].includes(player.voivodeship)) currentResolvedLeague = "I Liga Mężczyzn - Gr. A";
@@ -1476,9 +1567,9 @@
             }
         }
 
-        if (player.isChampion && !isForeign) {
+        if (player.isChampion && currentResolvedLeague !== player.league) {
             marketContainer.innerHTML += `<div style="background:#fff3cd; color:#856404; padding:10px; margin-bottom:15px; text-align:center; font-weight:bold;">AWANS! Drużyna zagra w: ${currentResolvedLeague}!</div>`;
-        } else if (player.isRelegated && !isForeign) {
+        } else if (player.isRelegated && currentResolvedLeague !== player.league) {
             marketContainer.innerHTML += `<div style="background:#f8d7da; color:#721c24; padding:10px; margin-bottom:15px; text-align:center; font-weight:bold;">SPADEK! Spadacie do: ${currentResolvedLeague}!</div>`;
         }
 
@@ -1492,9 +1583,27 @@
             </div>
         `;
 
-        // Opcja "Ratunkowa" / Zmiana klubu przy spadku w Polsce
-        if (player.isRelegated && !isForeign) {
-            let sameLowerTeams = polishLeaguesData[currentResolvedLeague] || [];
+        if (isForeign) {
+            let plLeague = "Orlen Superliga";
+            if (player.ovr < 65) plLeague = "II Liga Mężczyzn - Gr. 4";
+            else if (player.ovr < 75) plLeague = "I Liga Mężczyzn - Gr. B";
+            else if (player.ovr < 80) plLeague = "Liga Centralna";
+            
+            let plTeams = polishLeaguesData[plLeague] || [];
+            if (plTeams.length > 0) {
+                let plOffer = plTeams[Math.floor(Math.random() * plTeams.length)];
+                let plSal = calculateRealisticSalary(plLeague, player.ovr);
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${plOffer.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Powrót do ojczyzny (${plLeague})</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${plSal.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:var(--zprp-red);" onclick="acceptTransfer('${plOffer.name}', '${plLeague}', ${plSal})">Wróć do Polski</button>
+                </div>`;
+            }
+        }
+
+        if (player.isRelegated && currentResolvedLeague !== player.league) {
+            let sameLowerTeams = isForeign ? (foreignLeaguesData[currentResolvedLeague].clubs || []) : (polishLeaguesData[currentResolvedLeague] || []);
             let sameLowerOffer = sameLowerTeams.find(t => t.name !== player.club) || {name: "Inny Klub"};
             let sameLowerSal = calculateRealisticSalary(currentResolvedLeague, player.ovr);
             marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #555; padding:15px; margin-bottom:12px;">
@@ -1505,7 +1614,6 @@
             </div>`;
         }
 
-        // Oferty z wyższej ligi (Polska)
         if (!isForeign && !player.isRelegated && !player.league.includes("Superliga")) {
             let nextPL = player.league.includes("I Liga") ? "Liga Centralna" : (player.league.includes("Centralna") ? "Orlen Superliga" : "I Liga Mężczyzn - Gr. B");
             let plTeams = polishLeaguesData[nextPL] || [];
@@ -1517,9 +1625,23 @@
                 <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${offerPLSalary.toLocaleString()} zł / mies.</strong></div>
                 <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#333;" onclick="acceptTransfer('${offerPL.name}', '${nextPL}', ${offerPLSalary})">Zmień Klub (Polska)</button>
             </div>`;
+        } else if (isForeign && !player.isRelegated && foreignLeaguesData[player.league].ihfTier > 1) {
+            let countryTagMatch = player.league.match(/\(([^)]+)\)/);
+            let countryTag = countryTagMatch ? countryTagMatch[1] : "";
+            let nextFL = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === foreignLeaguesData[player.league].ihfTier - 1);
+            if (nextFL) {
+                let flTeams = foreignLeaguesData[nextFL].clubs || [];
+                let offerFL = flTeams[Math.floor(Math.random() * flTeams.length)];
+                let offerFLSalary = calculateRealisticSalary(nextFL, player.ovr);
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #333; padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${offerFL.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Transfer wyżej w tym samym kraju (${nextFL})</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${offerFLSalary.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#333;" onclick="acceptTransfer('${offerFL.name}', '${nextFL}', ${offerFLSalary})">Zmień Klub Wyżej</button>
+                </div>`;
+            }
         }
 
-        // Oferty z potęg Superligi (jeśli gracz jest wystarczająco dobry, gra w średniaku i nie spadł)
         if (!isForeign && !player.isRelegated && player.league.includes("Superliga") && player.ovr >= 78) {
             let topTeams = polishLeaguesData["Orlen Superliga"].filter(t => t.strength >= 90 && t.name !== player.club);
             if (topTeams.length > 0) {
@@ -1534,11 +1656,10 @@
             }
         }
 
-        // Oferty Zagraniczne (tylko z innych klubów niż obecny)
         let eligibleForeign = Object.entries(foreignLeaguesData).filter(([lname, data]) => {
             let minOvrNeeded = Math.min(...data.clubs.map(c => c.strength)) - 8;
             return player.ovr >= minOvrNeeded;
-        }).sort(() => 0.5 - Math.random()); // Losowa kolejność uprawnionych lig
+        }).sort(() => 0.5 - Math.random()); 
 
         let foreignCount = 0;
         eligibleForeign.forEach(([lName, data]) => {
@@ -1566,7 +1687,7 @@
             if (fInfo) {
                 let cInfo = fInfo.clubs.find(c => c.name === newClub);
                 player.teamOVR = cInfo ? cInfo.strength : fInfo.strength;
-                player.qualifiedForCL = cInfo ? !!cInfo.cl : false; // Reset CL bazując na nowym klubie, jeśli to transfer!
+                player.qualifiedForCL = cInfo ? !!cInfo.cl : false; 
             } else {
                 let dInfo = polishLeaguesData[newLeague];
                 let cInfo = dInfo ? dInfo.find(c => c.name === newClub) : null;
