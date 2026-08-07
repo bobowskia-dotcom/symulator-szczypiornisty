@@ -1127,15 +1127,19 @@
         let won = false;
         let exitStage = "Faza Grupowa";
 
+        let clOpponents = ["THW Kiel", "SC Magdeburg", "Paris Saint-Germain HB", "HBC Nantes", "FC Barcelona Handbol", "Aalborg Håndbold", "GOG Håndbold", "Telekom Veszprém", "Pick Szeged", "Sporting CP"];
+        function getClOpp() { return clOpponents[Math.floor(Math.random() * clOpponents.length)]; }
+
         // Grupowa - 14 spotkań
         let clAvgGrpStrength = 85;
         let pts = 0;
+        let grpOpps = [getClOpp(), getClOpp(), getClOpp()];
         for(let i=0; i<14; i++) {
             let winChance = 0.5 + ((teamStrength - clAvgGrpStrength) / 100);
             if (Math.random() < winChance) pts += 2;
             else if (Math.random() < 0.1) pts += 1;
         }
-        matchLog.push(`<strong>Faza Grupowa:</strong> Zdobyto ${pts} pkt.`);
+        matchLog.push(`<strong>Faza Grupowa:</strong> Rywalizacja m.in. z ${grpOpps[0]}, ${grpOpps[1]}. Zdobyto ${pts} pkt.`);
 
         if (pts > 14) {
             // Awans do fazy pucharowej
@@ -1146,7 +1150,8 @@
                 let winChance = 0.5 + ((teamStrength - oppStr) / 100);
                 let isWin = Math.random() < winChance;
                 let score = isWin ? `32:29` : `28:31`;
-                matchLog.push(`<strong>${stages[i]}:</strong> ${score} - <span style="color:${isWin?'green':'red'}">${isWin?'WYGRANA':'PORAŻKA'}</span>`);
+                let opName = getClOpp();
+                matchLog.push(`<strong>${stages[i]}:</strong> vs ${opName} (${score}) - <span style="color:${isWin?'green':'red'}">${isWin?'WYGRANA':'PORAŻKA'}</span>`);
                 if (!isWin) { won = false; exitStage = stages[i]; break; }
             }
         }
@@ -1205,26 +1210,82 @@
         let outcomeMsg = "";
         let medal = false;
 
+        // Pula Przeciwników z prawdziwego Topu
+        let ntPool = ["Francja", "Dania", "Szwecja", "Niemcy", "Hiszpania", "Norwegia", "Islandia", "Chorwacja", "Egipt", "Węgry", "Słowenia", "Portugalia"];
+        function getNTOpp() { return ntPool.splice(Math.floor(Math.random() * ntPool.length), 1)[0] || "Serbia"; }
+
+        let baseChance = (player.ovr - 70) / 50; 
+        let gladiatorBonus = mode === 'gladiator' ? 0.3 : (mode === 'normal' ? 0.1 : -0.2);
+        let runChance = baseChance + gladiatorBonus + Math.random();
+
+        let stageReached = "";
+        let matchesPlayed = 0;
+        let tMatchLog = [];
+
+        if (runChance < 0.5) {
+            stageReached = "Faza Grupowa (Odpadnięcie)";
+            matchesPlayed = 3;
+            tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
+            outcomeMsg = "Szybki powrót po słabej fazie grupowej.";
+        } else if (runChance < 0.9) {
+            stageReached = "Faza Zasadnicza / Runda Główna";
+            matchesPlayed = 5;
+            tMatchLog.push(`Grupa: Awans (2 wygrane, 1 porażka)`);
+            tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (REMIS)`);
+            outcomeMsg = "Solidny turniej, ale brakło jakości na ćwierćfinał.";
+        } else if (runChance < 1.3) {
+            stageReached = "Ćwierćfinał";
+            matchesPlayed = 7;
+            tMatchLog.push(`Faza grupowa i zasadnicza: Pewny awans!`);
+            tMatchLog.push(`Ćwierćfinał vs ${getNTOpp()} (PORAŻKA po walce)`);
+            outcomeMsg = "Polska w najlepszej ósemce! Odpadacie w 1/4 finału.";
+        } else if (runChance < 1.6) {
+            stageReached = "Półfinał (Brak Medalu)";
+            matchesPlayed = 9;
+            tMatchLog.push(`Grupa/Zasadnicza: Dominacja!`);
+            tMatchLog.push(`Ćwierćfinał vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`Półfinał vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`Mecz o 3. miejsce vs ${getNTOpp()} (PORAŻKA)`);
+            outcomeMsg = "Historyczny wynik, ale zajmujecie 4. miejsce.";
+        } else {
+            stageReached = "MEDAL!";
+            matchesPlayed = 9;
+            medal = true;
+            tMatchLog.push(`Droga do Final4: Zwycięstwa nad potęgami!`);
+            tMatchLog.push(`Półfinał vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`Finał / O brąz vs ${getNTOpp()} (ZWYCIĘSTWO)`);
+            outcomeMsg = "NIESAMOWITE! Polska zdobywa medal wielkiej imprezy!";
+        }
+
+        let goalsPerMatch = Math.floor(player.ovr * 0.08) + (mode === 'gladiator' ? 2 : 0);
+        let tGoals = matchesPlayed * goalsPerMatch + Math.floor(Math.random() * 5);
+
         if (mode === 'gladiator') {
             player.injuryRisk += 25; player.form -= 15;
-            if (Math.random() < 0.35) { medal = true; outcomeMsg = `FENOMENALNIE! Twój heroizm dał Polsce medal!`; player.media += 25; seasonStats.awards.push("All-Star Team " + tName); }
-            else { outcomeMsg = `Zostawiłeś serce, ale Polska odpada w ćwierćfinale. Jesteś wykończony.`; }
+            if (medal) { player.media += 25; seasonStats.awards.push("All-Star Team " + tName); }
         } else if (mode === 'normal') {
             player.injuryRisk += 5;
-            if (Math.random() < 0.1) { medal = true; outcomeMsg = `Solidna gra wystarczyła na niespodziewany medal!`; }
-            else { outcomeMsg = `Standardowy turniej, Polska wraca do domu po fazie grupowej.`; }
         } else if (mode === 'rest') {
             player.prof -= 10; player.media -= 10; player.form += 10;
-            outcomeMsg = `Oszczędzałeś nogi, kibice Cię hejtują (-Medialność), ale wracasz wypoczęty do klubu.`;
         }
 
         if (medal) setBestAchievement(`Medalista ${tName}`, 4);
 
-        player.pendingTournamentData.tournamentResultMsg = `<strong>Decyzja:</strong> ${mode.toUpperCase()} - ${outcomeMsg}`;
+        player.pendingTournamentData.tournamentResultMsg = `
+            <strong>Decyzja:</strong> ${mode.toUpperCase()} - ${outcomeMsg}<br>
+            <div style="margin-top:8px; border-top:1px solid #ccc; padding-top:8px;">
+                <strong>Etap:</strong> ${stageReached}<br>
+                <strong>Mecze Polaków:</strong><br>
+                <span style="font-size:0.75rem; color:#555;">${tMatchLog.join("<br>")}</span>
+            </div>
+        `;
         
         // Zapisz do stats przed renderem
-        player.national.caps += player.pendingTournamentData.windowMatches + (medal ? 8 : 4);
-        player.national.goals += player.pendingTournamentData.windowGoals + (medal ? 35 : 15);
+        player.national.caps += matchesPlayed;
+        player.national.goals += tGoals;
 
         renderPostSeasonScreen(true);
     }
@@ -1242,6 +1303,9 @@
             cachedSeasonRender = {m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult};
         }
 
+        // NAPRAWA BŁĘDU NAKŁADANIA EKRANÓW:
+        document.getElementById('subscreen-preseason').style.display = 'none';
+        
         document.getElementById('panel-main-title').innerText = "Podsumowanie Sezonu";
         document.getElementById('panel-season-title').innerText = "PANEL SEZONOWY • " + player.club;
 
@@ -1371,6 +1435,9 @@
     }
 
     function openTransferMarket() {
+        // NAPRAWA BŁĘDU NAKŁADANIA EKRANÓW W RYNKU TRANSFEROWYM:
+        document.getElementById('subscreen-preseason').style.display = 'none';
+        
         document.getElementById('subscreen-postseason').style.display = 'none';
         document.getElementById('panel-main-title').innerText = "Rynek Transferowy i Awansy";
         document.getElementById('panel-season-title').innerText = "OKNO LETNIE • WIEK: " + player.age;
@@ -1450,6 +1517,21 @@
                 <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${offerPLSalary.toLocaleString()} zł / mies.</strong></div>
                 <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#333;" onclick="acceptTransfer('${offerPL.name}', '${nextPL}', ${offerPLSalary})">Zmień Klub (Polska)</button>
             </div>`;
+        }
+
+        // Oferty z potęg Superligi (jeśli gracz jest wystarczająco dobry, gra w średniaku i nie spadł)
+        if (!isForeign && !player.isRelegated && player.league.includes("Superliga") && player.ovr >= 78) {
+            let topTeams = polishLeaguesData["Orlen Superliga"].filter(t => t.strength >= 90 && t.name !== player.club);
+            if (topTeams.length > 0) {
+                let topOffer = topTeams[Math.floor(Math.random() * topTeams.length)];
+                let topSal = calculateRealisticSalary("Orlen Superliga", player.ovr) + 8000;
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #1b1b1b; padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${topOffer.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Krajowy Gigant (Orlen Superliga)</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${topSal.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#1b1b1b;" onclick="acceptTransfer('${topOffer.name}', 'Orlen Superliga', ${topSal})">Przejdź do potęgi</button>
+                </div>`;
+            }
         }
 
         // Oferty Zagraniczne (tylko z innych klubów niż obecny)
