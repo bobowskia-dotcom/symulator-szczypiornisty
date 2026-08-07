@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oficjalny Symulator Kariery – Polski Szczypiornista</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Oswald:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --zprp-red: #da291c;
+            --zprp-dark: #1b1b1b;
+            --zprp-gray: #f4f4f4;
+            --zprp-border: #dcdcdc;
+            --gold-medal: #ffd700;
+        }
+
+        body {
+            background-color: #f9f9f9;
+            color: var(--zprp-dark);
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #screen-creator, #screen-offers, #screen-summary, #screen-tournament-decision {
+            background: #ffffff;
+            color: var(--zprp-dark);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 650px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        #game-layout {
+            display: none;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            #game-layout { grid-template-columns: 1fr; }
+        }
+
+        .player-sidebar {
+            background: #ffffff;
+            border: 1px solid var(--zprp-border);
+            border-top: 4px solid var(--zprp-red);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 15px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            height: fit-content;
+        }
+
+        .player-sidebar h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.4rem;
+            text-transform: uppercase;
+            margin: 5px 0;
+            color: var(--zprp-dark);
+            border-bottom: 2px solid var(--zprp-red);
+            padding-bottom: 5px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .main-panel {
+            background: #ffffff;
+            border: 1px solid var(--zprp-border);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 20px;
+            border-radius: 6px;
+        }
+
+        .panel-header {
+            border-bottom: 3px solid var(--zprp-red);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .panel-header h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.6rem;
+            margin: 0;
+            text-transform: uppercase;
+            color: var(--zprp-dark);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .stat-box {
+            border: 1px solid var(--zprp-border);
+            background: var(--zprp-gray);
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .stat-box .label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .stat-box .val {
+            font-size: 1.2rem;
+            font-family: 'Oswald', sans-serif;
+            font-weight: bold;
+            color: var(--zprp-dark);
+        }
+
+        .brand-header {
+            text-align: center;
+            border-bottom: 3px solid var(--zprp-red);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .brand-header h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.6rem;
+            text-transform: uppercase;
+            color: var(--zprp-dark);
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        .brand-header .sub {
+            font-size: 0.8rem;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: #444;
+            text-transform: uppercase;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--zprp-gray);
+            border: 1px solid var(--zprp-border);
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .btn-start-zprp {
+            background: var(--zprp-red);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 10px rgba(218, 41, 28, 0.3);
+            margin-top: 10px;
+        }
+
+        .btn-start-zprp:hover {
+            background: #b52014;
+        }
+
+        .btn-dark {
+            background: var(--zprp-dark);
+        }
+        .btn-dark:hover {
+            background: #000;
+        }
+
+        .training-select {
+            width: 100%;
+            padding: 10px;
+            background: var(--zprp-gray);
+            border: 1px solid var(--zprp-border);
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .section-title {
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            color: var(--zprp-dark);
+            border-bottom: 1px solid var(--zprp-border);
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .decision-box {
+            background: var(--zprp-gray);
+            border: 1px solid var(--zprp-border);
+            border-left: 4px solid var(--zprp-red);
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+
+        .decision-btn {
+            background: #fff;
+            border: 1px solid var(--zprp-border);
+            padding: 10px 12px;
+            display: block;
+            width: 100%;
+            text-align: left;
+            margin-top: 8px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+            border-radius: 4px;
+        }
+
+        .decision-btn:hover {
+            border-color: var(--zprp-red);
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- KROK 1: KREATOR POSTACI -->
+    <div id="screen-creator">
+        <div class="brand-header">
+            <div style="font-size: 2rem; color: var(--zprp-red); margin-bottom: 5px;">🤾‍♂️</div>
+            <div class="sub">Oficjalny Symulator Kariery</div>
+            <h2>Polski Szczypiornista</h2>
+        </div>
+
+        <div class="form-group">
+            <label>Imię i Nazwisko:</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="char-name" value="Iwan Balicki" style="flex: 3;">
+                <button type="button" onclick="randomName()" style="flex: 1; background: #333; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Losuj</button>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Województwo (Polska):</label>
+            <select id="char-voivodeship">
+                <option value="dolnośląskie">Dolnośląskie</option>
+                <option value="kujawsko-pomorskie">Kujawsko-Pomorskie</option>
+                <option value="lubelskie">Lubelskie</option>
+                <option value="lubuskie">Lubuskie</option>
+                <option value="łódzkie">Łódzkie</option>
+                <option value="małopolskie">Małopolskie</option>
+                <option value="mazowieckie">Mazowieckie</option>
+                <option value="opolskie">Opolskie</option>
+                <option value="podkarpackie">Podkarpackie</option>
+                <option value="podlaskie">Podlaskie</option>
+                <option value="pomorskie">Pomorskie</option>
+                <option value="śląskie" selected>Śląskie</option>
+                <option value="świętokrzyskie">Świętokrzyskie</option>
+                <option value="warmińsko-mazurskie">Warmińsko-Mazurskie</option>
+                <option value="wielkopolskie">Wielkopolskie</option>
+                <option value="zachodniopomorskie">Zachodniopomorskie</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Punkt Startowy (Overall):</label>
+            <select id="char-start-tier">
+                <option value="40">Podwórkowy gracz (OVR 40)</option>
+                <option value="48" selected>Amator z okręgówki (OVR 48)</option>
+                <option value="55">Szkoła Mistrzostwa Sportowego (OVR 55)</option>
+                <option value="62">Super-talent (OVR 62)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Pozycja na parkiecie:</label>
+            <select id="char-position">
+                <option value="GK">Bramkarz (GK)</option>
+                <option value="WNG">Skrzydłowy (LW/RW)</option>
+                <option value="CTR" selected>Rozgrywający (LB/CB/RB)</option>
+                <option value="PV">Obrotowy / Kołowy (PV)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Poziom trudności:</label>
+            <select id="char-difficulty">
+                <option value="easy">Łatwy (Szybki rozwój, rzadsze urazy)</option>
+                <option value="hard" selected>Trudny (Stagnacja w słabych ligach, realistyczne kontuzje)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Lepsza ręka:</label>
+            <select id="char-hand">
+                <option value="prawa">Prawa</option>
+                <option value="lewa">Lewa (Bonus na prawe rozegranie)</option>
+            </select>
+        </div>
+
+        <button class="btn-start-zprp" onclick="goToOffers()">Rozpocznij Karierę</button>
+    </div>
+
+    <!-- KROK 2: WYBÓR OFERT -->
+    <div id="screen-offers" style="display:none;"></div>
+
+    <!-- EKRAN DECYZYJNY - WIELKI TURNIEJ REPREZENTACJI (MŚ/EURO) -->
+    <div id="screen-tournament-decision" style="display: none;">
+        <div class="brand-header">
+            <div style="font-size: 2rem; margin-bottom: 5px;">🇵🇱</div>
+            <div class="sub">Reprezentacja Polski</div>
+            <h2 id="tournament-decision-title">Mistrzostwa Świata</h2>
+        </div>
+        <p style="text-align:center; font-size:0.9rem;">Zostałeś powołany na wielki turniej! Jako ważny zawodnik kadry, jak podejdziesz do tych mistrzostw?</p>
+        
+        <button class="decision-btn" style="border-left: 4px solid var(--zprp-red);" onclick="resolveTournament('gladiator')">
+            <strong>Tryb Gladiator (Zostawiam serce na parkiecie)</strong><br>
+            <span style="font-size:0.75rem; color:#666;">Ogromne szanse na bramki i nagrody MVP, ale OGROMNE ryzyko ciężkiej kontuzji po turnieju.</span>
+        </button>
+        <button class="decision-btn" style="border-left: 4px solid #005a9c;" onclick="resolveTournament('normal')">
+            <strong>Solidna gra (Zbalansowane zaangażowanie)</strong><br>
+            <span style="font-size:0.75rem; color:#666;">Grasz na miarę możliwości. Standardowe szanse na wynik i standardowe zmęczenie.</span>
+        </button>
+        <button class="decision-btn" style="border-left: 4px solid #555;" onclick="resolveTournament('rest')">
+            <strong>Oszczędzam się (Priorytetem jest klub)</strong><br>
+            <span style="font-size:0.75rem; color:#666;">Unikasz urazów, odpoczywasz na ligę, ale szanse kadry drastycznie spadają. Kibice będą wściekli.</span>
+        </button>
+    </div>
+
+    <!-- KROK 3: GŁÓWNY PANEL KARIERY (KARTA BOCZNA + SEZON) -->
+    <div id="game-layout">
+        <!-- LEWA STRONA: KARTA ZAWODNIKA -->
+        <div class="player-sidebar">
+            <button onclick="location.reload()" class="btn-start-zprp btn-dark" style="margin-top:0; margin-bottom:15px; padding:10px; font-size:1rem;">ZACZNIJ OD NOWA</button>
+
+            <div style="font-size: 0.7rem; font-weight: bold; color: var(--zprp-red);" id="sidebar-voivodeship">ŚLĄSKIE</div>
+            <h2 id="sidebar-name">Iwan Balicki</h2>
+            <div style="font-size: 0.75rem; margin-bottom: 10px; color: #666;" id="sidebar-pos-info">ROZGRYWAJĄCY • TALENT</div>
+            
+            <div style="display: flex; justify-content: space-between; background: var(--zprp-gray); border: 1px solid var(--zprp-border); border-radius: 4px; padding: 8px; margin-bottom: 10px; text-align: center;">
+                <div><div style="font-size:0.6rem; text-transform:uppercase; color:#666;">OVR</div><div id="sidebar-ovr" style="font-family:'Oswald'; font-size:1.3rem; color:var(--zprp-red);">48</div></div>
+                <div><div style="font-size:0.6rem; text-transform:uppercase; color:#666;">Wiek</div><div id="sidebar-age" style="font-family:'Oswald'; font-size:1.3rem;">16</div></div>
+                <div><div style="font-size:0.6rem; text-transform:uppercase; color:#666;">Rok</div><div id="sidebar-year" style="font-family:'Oswald'; font-size:1.3rem;">2026</div></div>
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <div style="font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: #666;">Klub</div>
+                <div id="sidebar-club" style="font-weight: bold;">Brak</div>
+                <div style="font-size: 0.75rem; color: #666;" id="sidebar-league">Brak</div>
+            </div>
+
+            <div class="stat-row"><span>Status</span><strong id="sidebar-status">Debiutant / Akademia</strong></div>
+            <div class="stat-row"><span>Forma</span><strong id="sidebar-form">55/100 (stabilna)</strong></div>
+
+            <div style="margin: 10px 0; border-top: 1px solid #eee; padding-top: 8px;">
+                <div style="font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: var(--zprp-red);">🇵🇱 Reprezentacja Polski</div>
+                <div class="stat-row"><span>Status</span><strong id="sidebar-rep">Brak powołania</strong></div>
+                <div class="stat-row"><span>Występy / Bramki</span><strong id="sidebar-rep-caps">0 / 0</strong></div>
+            </div>
+
+            <div style="margin: 10px 0; border-top: 1px solid #eee; padding-top: 8px;">
+                <div style="font-size: 0.65rem; text-transform: uppercase; font-weight: bold; color: #d4af37;">🏆 Największy Sukces</div>
+                <div style="font-weight: bold; color: var(--zprp-dark); font-size: 0.85rem;" id="sidebar-best-achievement">Brak sukcesów</div>
+            </div>
+
+            <div style="margin: 10px 0; border-top: 1px solid #eee; padding-top: 8px;">
+                <div class="stat-row"><span>Pensja / mies.</span><strong id="sidebar-salary">1 500 zł</strong></div>
+                <div class="stat-row"><span>Zarobione</span><strong id="sidebar-total-earned">0 zł</strong></div>
+            </div>
+
+            <div style="border-top: 1px solid #eee; padding-top: 8px; font-size: 0.8rem;">
+                <div class="stat-row"><span>Profesjonalizm</span><strong id="sidebar-prof">60/100</strong></div>
+                <div class="stat-row"><span>Medialność</span><strong id="sidebar-media">15/100</strong></div>
+                <div class="stat-row"><span>Ryzyko urazu</span><strong id="sidebar-injury">10%</strong></div>
+            </div>
+        </div>
+
+        <!-- PRAWA STRONA: PANEL GŁÓWNY -->
+        <div class="main-panel">
+            <div class="panel-header">
+                <div style="font-size: 0.75rem; text-transform: uppercase; font-weight: bold; color: #666;" id="panel-season-title">SEZON 2026/27 • Start Kariery</div>
+                <h1 id="panel-main-title">Pierwsze kroki w seniorskim szczypiorniaku</h1>
+            </div>
+
+            <!-- Ekran Przed Sezonem -->
+            <div id="subscreen-preseason">
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="label">Mecze</div><div class="val" id="stat-matches">0</div></div>
+                    <div class="stat-box"><div class="label">Bramki</div><div class="val" id="stat-goals">0</div></div>
+                    <div class="stat-box"><div class="label">Asysty</div><div class="val" id="stat-assists">0</div></div>
+                    <div class="stat-box"><div class="label">Minuty</div><div class="val" id="stat-minutes">0</div></div>
+                </div>
+
+                <div id="injury-warning-box" style="display:none; background: #fff3cd; border: 1px solid #ffeeba; border-left: 4px solid #856404; padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <div style="font-weight: bold; color: #856404; font-size: 0.95rem;">⚠️ Podwyższone ryzyko kontuzji (<span id="injury-risk-val"></span>%)</div>
+                    <p style="font-size: 0.85rem; color: #666; margin: 5px 0 10px 0;">Rozważ wizytę w prywatnej klinice, aby zregenerować organizm przed trudami sezonu.</p>
+                    <button onclick="doRehab()" style="background: #856404; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;">Opłać Fizjoterapeutę (5 000 zł) - Ryzyko w dół</button>
+                </div>
+
+                <div style="background: var(--zprp-gray); border: 1px solid var(--zprp-border); padding: 15px; margin-bottom: 15px; border-radius: 4px;">
+                    <div style="font-family:'Oswald'; font-size: 1.1rem; text-transform: uppercase; margin-bottom: 5px;">Przed sezonem</div>
+                    <p style="margin: 0; font-size: 0.9rem; color: #555;">Wszystko przed tobą. Wybierz kluczowy element do treningu na najbliższe miesiące. Rozgrywający (CTR) i Bramkarz (GK) mają największy wpływ na wyniki drużyny.</p>
+                </div>
+
+                <div class="section-title">Wybierz umiejętność do rozwoju na ten sezon:</div>
+                <select class="training-select" id="training-focus-select">
+                    <option value="rzut">Skuteczność rzutów z 9. metra (Rzut)</option>
+                    <option value="gra1v1" selected>Gra 1 na 1 i zwody (Technika)</option>
+                    <option value="iq">Przegląd pola i dogrania do koła (IQ)</option>
+                    <option value="obrona">Blok i twarda gra w defensywie (Obrona)</option>
+                </select>
+
+                <button class="btn-start-zprp" onclick="playSeason()">Rozegraj Sezon</button>
+            </div>
+
+            <!-- Ekran Po Sezonie / Wyniki i Tabela -->
+            <div id="subscreen-postseason" style="display: none;"></div>
+
+            <!-- Historia Kariery -->
+            <div style="margin-top: 30px; border-top: 2px solid var(--zprp-border); padding-top: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-family:'Oswald'; text-transform:uppercase; font-size: 1.1rem;">Historia • Twoja kariera</div>
+                    <div>
+                        <span id="history-points" style="background: var(--zprp-red); color: white; padding: 3px 8px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; margin-right: 5px;">0 PKT</span>
+                        <button onclick="toggleHistory()" style="background:#fff; border:1px solid var(--zprp-border); padding:3px 8px; font-size:0.75rem; cursor:pointer; border-radius:4px;" id="history-toggle-btn">ROZWIŃ</button>
+                    </div>
+                </div>
+                <div id="history-log-box" style="margin-top: 10px; font-size: 0.85rem; display: none;">
+                    <div style="border-left: 2px solid var(--zprp-red); padding-left: 10px; margin-bottom: 8px;">
+                        <strong>16 LAT (2026)</strong> — Start kariery w seniorskim klubie.<br>
+                        <span style="color:#666; font-size:0.75rem;">II Liga Mężczyzn</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EKRAN EMERYTURY / ZAKOŃCZENIA KARIERY -->
+    <div id="screen-summary" style="display: none;">
+        <div class="brand-header">
+            <div style="font-size: 3rem; margin-bottom: 5px;">👟</div>
+            <div class="sub">Oficjalne Podsumowanie</div>
+            <h2>Zakończenie Kariery</h2>
+        </div>
+        <div id="retirement-stats" style="margin-bottom: 20px;"></div>
+        <div style="background: #fff; border: 1px solid var(--zprp-border); padding: 15px; border-radius: 4px; max-height: 250px; overflow-y: auto; margin-bottom: 20px; font-size: 0.85rem;" id="retirement-history"></div>
+        
+        <button class="btn-start-zprp btn-dark" onclick="location.reload()">ROZPOCZNIJ NOWĄ GRĘ OD ZERA</button>
+    </div>
+
+    <script>
+    const legendNames = [
+        "Tyberiusz Omejerczyk", "Arkadiusz Szterbiak", "Andrzej Ławrowicz", "Stefan Kaczmarek", 
+        "Wawrzyniec Krystiańciak", "Mikołaj Karabaticz", "Filip Jichowic", "Karol Bielak", 
+        "Iwan Balicz", "Marek Wiślaniec", "Tomasz Dujszebajewicz", "Olaf Stefanuk", 
+        "Cyryl Łazaruk", "Mirosław Dżombiak", "Bartłomiej Gilon", "Jacek Ryszardas"
+    ];
+
+    function randomName() {
+        const randomIndex = Math.floor(Math.random() * legendNames.length);
+        const nameInput = document.getElementById('char-name');
+        if (nameInput) nameInput.value = legendNames[randomIndex];
+    }
+
+    let player = {
+        name: "", age: 16, currentYear: 2026, voivodeship: "śląskie", position: "CTR", hand: "prawa", ovr: 48, difficulty: "hard",
+        salaryNum: 1500, totalEarned: 0, club: "Brak", league: "II Liga Mężczyzn - Gr. 4", teamOVR: 42,
+        prof: 60, media: 15, injuryRisk: 10, historyPoints: 0, isChampion: false, isRelegated: false,
+        isPlayoffSpot: false, loyalty: 0,
+        stats: { rzut: 48, gra1v1: 47, iq: 50, obrona: 46 },
+        form: 55, formTrend: "stabilna",
+        bestAchievement: "Brak sukcesów", bestAchievementTier: 0,
+        careerStats: { matches: 0, goals: 0, assists: 0 },
+        national: { capped: false, called: false, caps: 0, goals: 0, role: "Brak powołania" },
+        qualifiedForCL: false, pendingTournamentData: null
+    };
+
+    let seasonStats = { goals: 0, assists: 0, finalPos: 0, awards: [] };
+    let currentSeasonTable = [];
+    let historyLog = [];
+    let cupLog = [];
+    let nationalTeamLog = [];
+    let currentResolvedLeague = ""; 
+
+    // BAZA WYDARZEŃ LOSOWYCH Z 2 OPCJAMI DO WYBORU
+    const eventsDatabase = [
+        {
+            title: "Zgubiony bagaż przez linie lotnicze",
+            desc: "Lecisz na mecz bez swoich ulubionych butów. Co robisz?",
+            opt1: { label: "Gram w pożyczonych o rozmiar mniejszych", action: () => { player.injuryRisk += 15; player.media += 5; return "Doceniają Twoje poświęcenie (+5 Media), ale stopy krwawią (+15% Ryzyko urazu)."; } },
+            opt2: { label: "Odmawiam gry w tym meczu", action: () => { player.prof -= 10; player.form -= 5; return "Trener wściekły (-10 Prof), spadek formy, ale zdrowie zachowane."; } }
+        },
+        {
+            title: "Impreza integracyjna w klubie",
+            desc: "Koledzy proponują ostre wyjście na miasto przed porannym rozbieganiem.",
+            opt1: { label: "Idę z nimi, budujemy morale!", action: () => { player.form -= 10; player.prof -= 15; player.loyalty += 5; return "Zaspałeś na trening. Spadek formy i profesjonalizmu, ale lubią Cię w szatni."; } },
+            opt2: { label: "Piję wodę i wracam o 22:00", action: () => { player.form += 5; player.prof += 5; return "Trener widzi w Tobie profesjonalistę (+5 Forma, +5 Prof)."; } }
+        },
+        {
+            title: "Kontrowersyjna decyzja sędziego",
+            desc: "Sędzia dyktuje niesłusznego karnego dla rywali w kluczowym momencie.",
+            opt1: { label: "Krzyczę na sędziego (Afera)", action: () => { player.media += 15; player.prof -= 10; return "Wideo z Twoją furią to hit internetu (+15 Media), ale Związek wlepia karę (-10 Prof)."; } },
+            opt2: { label: "Odchodzę w milczeniu", action: () => { player.prof += 10; player.stats.obrona += 1; return "Chłodna głowa podnosi Profesjonalizm (+10) i skupienie w obronie (+1 OBR)."; } }
+        },
+        {
+            title: "Oferta Sponsora: Napój Energetyczny",
+            desc: "Lokalna firma oferuje 20,000 zł za picie ich cukrowego napoju po meczach.",
+            opt1: { label: "Biorę to, kasa to kasa", action: () => { player.totalEarned += 20000; player.prof -= 5; return "Konto puchnie (+20,000 zł), ale dietetyk klubowy płacze (-5 Prof)."; } },
+            opt2: { label: "Promuję tylko zdrowy styl życia", action: () => { player.prof += 10; player.media += 5; return "Kibice szanują Twoje zasady (+10 Prof, +5 Media)."; } }
+        },
+        {
+            title: "Podejrzenie mikrourazu barku",
+            desc: "Fizjoterapeuta zaleca 2 tygodnie przerwy, by zapobiec zerwaniu mięśnia.",
+            opt1: { label: "Zaciskam zęby i gram!", action: () => { player.injuryRisk += 25; return "Bohaterska postawa, ale igrasz z ogniem! Ryzyko ciężkiej kontuzji drastycznie wzrasta (+25%)."; } },
+            opt2: { label: "Pauzuję i robię rezonans", action: () => { player.form -= 10; player.injuryRisk = Math.max(0, player.injuryRisk - 15); return "Uraz zaleczony (Ryzyko spada), ale wypadasz z rytmu meczowego (-10 Forma)."; } }
+        }
+    ];
+
+    // --- NOWY POWER RANKING REPREZENTACJI ---
+    const nationalTeamsPowerRanking = [
+        // --- TIER 1: Światowi giganci (OVR 92-97) ---
+        { name: "Niemcy", code: "GER", tier: 1, strength: 97, worldPoints: 313, euroPoints: 3211 },
+        { name: "Szwecja", code: "SWE", tier: 1, strength: 95, worldPoints: 244, euroPoints: 394 },
+        { name: "Dania", code: "DEN", tier: 1, strength: 94, worldPoints: 211, euroPoints: 1426 },
+        { name: "Francja", code: "FRA", tier: 1, strength: 93, worldPoints: 194, euroPoints: 1728 },
+        { name: "Hiszpania", code: "ESP", tier: 1, strength: 91, worldPoints: 165, euroPoints: 1211 },
+        // --- TIER 2: Ścisła czołówka / Aspiranci (OVR 85-89) ---
+        { name: "Węgry", code: "HUN", tier: 2, strength: 89, worldPoints: 147, euroPoints: 1278 },
+        { name: "Serbia", code: "SRB", tier: 2, strength: 87, worldPoints: 177, euroPoints: 298 },
+        { name: "Chorwacja", code: "CRO", tier: 2, strength: 86, worldPoints: 119, euroPoints: 614 },
+        { name: "Portugalia", code: "POR", tier: 2, strength: 86, worldPoints: 9, euroPoints: 1035 },
+        { name: "Polska", code: "POL", tier: 2, strength: 85, worldPoints: 115, euroPoints: 969 },
+        { name: "Norwegia", code: "NOR", tier: 2, strength: 85, worldPoints: 58, euroPoints: 536 },
+        // --- TIER 3: Solidne zespoły europejskie i światowe (OVR 78-84) ---
+        { name: "Rosja", code: "RUS", tier: 3, strength: 84, worldPoints: 201, euroPoints: 31 },
+        { name: "Rumunia", code: "ROU", tier: 3, strength: 83, worldPoints: 134, euroPoints: 589 },
+        { name: "Macedonia Północna", code: "MKD", tier: 3, strength: 82, worldPoints: 17, euroPoints: 610 },
+        { name: "Islandia", code: "ISL", tier: 3, strength: 81, worldPoints: 97, euroPoints: 247 },
+        { name: "Słowenia", code: "SLO", tier: 3, strength: 80, worldPoints: 39, euroPoints: 439 },
+        { name: "Szwajcaria", code: "SUI", tier: 3, strength: 79, worldPoints: 45, euroPoints: 405 },
+        { name: "Czechy", code: "CZE", tier: 3, strength: 79, worldPoints: 87.5, euroPoints: 298 },
+        { name: "Egipt", code: "EGY", tier: 3, strength: 78, worldPoints: 65, euroPoints: 0 },
+        { name: "Austria", code: "AUT", tier: 3, strength: 78, worldPoints: 22, euroPoints: 242 },
+        // --- TIER 4: Uczestnicy i drużyny aspirujące (OVR 70-77) ---
+        { name: "Słowacja", code: "SVK", tier: 4, strength: 77, worldPoints: 68.5, euroPoints: 125 },
+        { name: "Grecja", code: "GRE", tier: 4, strength: 76, worldPoints: 10, euroPoints: 362 },
+        { name: "Bośnia i Hercegowina", code: "BIH", tier: 4, strength: 75, worldPoints: 2, euroPoints: 355 },
+        { name: "Tunezja", code: "TUN", tier: 4, strength: 75, worldPoints: 48, euroPoints: 0 },
+        { name: "Turcja", code: "TUR", tier: 4, strength: 74, worldPoints: 0, euroPoints: 246 },
+        { name: "Włochy", code: "ITA", tier: 4, strength: 74, worldPoints: 2, euroPoints: 205 },
+        { name: "Korea Południowa", code: "KOR", tier: 4, strength: 73, worldPoints: 41, euroPoints: 0 },
+        { name: "Argentyna", code: "ARG", tier: 4, strength: 73, worldPoints: 24, euroPoints: 0 },
+        { name: "Brazylia", code: "BRA", tier: 4, strength: 72, worldPoints: 20, euroPoints: 0 },
+        { name: "Czarnogóra", code: "MNE", tier: 4, strength: 72, worldPoints: 1, euroPoints: 93 },
+        { name: "Japonia", code: "JPN", tier: 4, strength: 71, worldPoints: 30, euroPoints: 0 },
+        { name: "Algieria", code: "ALG", tier: 4, strength: 70, worldPoints: 32, euroPoints: 0 },
+        { name: "Katar", code: "QAT", tier: 4, strength: 70, worldPoints: 21, euroPoints: 0 },
+        // --- TIER 5: Drużyny rozwijające się i kopciuszki (OVR 60-69) ---
+        { name: "Luksemburg", code: "LUX", tier: 5, strength: 69, worldPoints: 0, euroPoints: 185 },
+        { name: "Estonia", code: "EST", tier: 5, strength: 68, worldPoints: 0, euroPoints: 121 },
+        { name: "Litwa", code: "LTU", tier: 5, strength: 68, worldPoints: 6, euroPoints: 115 },
+        { name: "Finlandia", code: "FIN", tier: 5, strength: 67, worldPoints: 0, euroPoints: 108 },
+        { name: "Izrael", code: "ISR", tier: 5, strength: 67, worldPoints: 0, euroPoints: 106 },
+        { name: "Kosowo", code: "KOS", tier: 5, strength: 66, worldPoints: 0, euroPoints: 103 },
+        { name: "Cypr", code: "CYP", tier: 5, strength: 66, worldPoints: 0, euroPoints: 101 },
+        { name: "Wyspy Owcze", code: "FAR", tier: 5, strength: 65, worldPoints: 0, euroPoints: 77 },
+        { name: "Ukraina", code: "UKR", tier: 5, strength: 65, worldPoints: 12, euroPoints: 72 },
+        { name: "Kuba", code: "CUB", tier: 5, strength: 64, worldPoints: 25, euroPoints: 0 },
+        { name: "Kuwejt", code: "KUW", tier: 5, strength: 64, worldPoints: 14, euroPoints: 0 },
+        { name: "Arabia Saudyjska", code: "KSA", tier: 5, strength: 63, worldPoints: 9, euroPoints: 0 },
+        { name: "Maroko", code: "MAR", tier: 5, strength: 63, worldPoints: 8, euroPoints: 0 },
+        { name: "Azerbejdżan", code: "AZE", tier: 5, strength: 62, worldPoints: 0, euroPoints: 53 },
+        { name: "Holandia", code: "NED", tier: 5, strength: 62, worldPoints: 0, euroPoints: 47 },
+        { name: "Belgia", code: "BEL", tier: 5, strength: 62, worldPoints: 0, euroPoints: 44 },
+        { name: "Australia", code: "AUS", tier: 5, strength: 61, worldPoints: 7, euroPoints: 0 },
+        { name: "Stany Zjednoczone", code: "USA", tier: 5, strength: 61, worldPoints: 5, euroPoints: 0 },
+        { name: "Bułgaria", code: "BUL", tier: 5, strength: 60, worldPoints: 5, euroPoints: 2 },
+        { name: "Łotwa", code: "LAT", tier: 5, strength: 60, worldPoints: 0, euroPoints: 35 }
+    ];
+
+    const foreignLeaguesData = {
+        "Bundesliga (Niemcy)": {
+            ihfTier: 1, strength: 96,
+            clubs: [
+                { name: "SC Magdeburg", strength: 96 }, { name: "Fuchse Berlin", strength: 95 },
+                { name: "Flensburg-H.", strength: 93 }, { name: "Gummersbach", strength: 86 },
+                { name: "Lemgo", strength: 85 }, { name: "Kiel", strength: 94 },
+                { name: "MT Melsungen", strength: 87 }, { name: "Rhein-Neckar", strength: 90 },
+                { name: "Goppingen", strength: 85 }, { name: "Hamburg", strength: 84 },
+                { name: "Hannover-Burgdorf", strength: 84 }, { name: "Stuttgart", strength: 81 },
+                { name: "Bergischer", strength: 78 }, { name: "Eisenach", strength: 76 },
+                { name: "Erlangen", strength: 76 }, { name: "HSG Wetzlar", strength: 77 },
+                { name: "Minden", strength: 75 }, { name: "Leipzig", strength: 76 }
+            ]
+        },
+        "2. Bundesliga (Niemcy)": {
+            ihfTier: 2, strength: 74,
+            clubs: [
+                { name: "HBW Balingen-Weilstetten", strength: 78 }, { name: "Bietigheim-Metterzimmern", strength: 77 },
+                { name: "Elbflorenz", strength: 75 }, { name: "Nordhorn-Lingen", strength: 75 },
+                { name: "Hagen", strength: 74 }, { name: "Potsdam", strength: 73 },
+                { name: "Lubeck-Schwartau", strength: 73 }, { name: "Huttenberg", strength: 73 },
+                { name: "Dessauer", strength: 72 }, { name: "Coburg 2000", strength: 72 },
+                { name: "N-Lubbecke", strength: 71 }, { name: "Essen", strength: 70 },
+                { name: "Dormagen", strength: 70 }, { name: "Ludwigshafen", strength: 69 },
+                { name: "Krefeld", strength: 69 }, { name: "Grosswallstadt", strength: 68 },
+                { name: "Ferndorf", strength: 66 }, { name: "Oppenweiler/Backnang", strength: 65 }
+            ]
+        },
+        "LNH StarLigue (Francja)": {
+            ihfTier: 1, strength: 94,
+            clubs: [
+                { name: "PSG", strength: 96 }, { name: "Nantes", strength: 90 }, { name: "Montpellier", strength: 91 },
+                { name: "Limoges", strength: 82 }, { name: "Chambery Savoie", strength: 83 },
+                { name: "St. Raphael", strength: 84 }, { name: "Toulouse", strength: 84 },
+                { name: "Tremblay", strength: 79 }, { name: "Provence Aix", strength: 81 },
+                { name: "Cesson", strength: 78 }, { name: "Nimes", strength: 80 },
+                { name: "Selestat", strength: 76 }, { name: "Dunkerque", strength: 77 },
+                { name: "Chartres", strength: 76 }, { name: "Istres", strength: 75 }, { name: "Dijon", strength: 74 }
+            ]
+        },
+        "ProLigue (Francja 2)": {
+            ihfTier: 2, strength: 73,
+            clubs: [
+                { name: "Saran", strength: 77 }, { name: "Ivry", strength: 76 }, { name: "Caen", strength: 76 },
+                { name: "Pontault", strength: 75 }, { name: "Pau Billere", strength: 75 }, { name: "Cherbourg", strength: 73 },
+                { name: "Valence", strength: 72 }, { name: "Creteil", strength: 72 }, { name: "Cournon d'Auvergne", strength: 71 },
+                { name: "Besancon", strength: 70 }, { name: "Frontignan", strength: 70 }, { name: "Sarrebourg", strength: 69 },
+                { name: "Saintes", strength: 69 }, { name: "Massy Essonne", strength: 68 }, { name: "Angers", strength: 67 }
+            ]
+        },
+        "Division de Honor Plata (Hiszpania)": {
+            ihfTier: 2, strength: 72,
+            clubs: [
+                { name: "Proin Triana", strength: 76 }, { name: "Puerto Sagunto", strength: 75 },
+                { name: "Burgos", strength: 75 }, { name: "Agustinos Alicante", strength: 74 },
+                { name: "Anaitasuna", strength: 74 }, { name: "Eivissa", strength: 72 },
+                { name: "Barcelona II", strength: 72 }, { name: "OAR Coruna", strength: 72 },
+                { name: "BM Sinfin", strength: 71 }, { name: "Benidorm", strength: 70 },
+                { name: "Cisne", strength: 70 }, { name: "Contazara Zaragoza", strength: 69 },
+                { name: "Oviedo", strength: 68 }, { name: "Balonmano Soria", strength: 68 },
+                { name: "Malaga", strength: 66 }, { name: "Alcobendas", strength: 65 }
+            ]
+        },
+        "Herre Håndbold Ligaen (Dania)": {
+            ihfTier: 1, strength: 90,
+            clubs: [
+                { name: "Aalborg", strength: 93 }, { name: "Skanderborg AGF", strength: 83 },
+                { name: "GOG", strength: 88 }, { name: "Holstebro", strength: 81 },
+                { name: "Skjern", strength: 85 }, { name: "Mors", strength: 80 },
+                { name: "Bjerringbro/Silkeborg", strength: 85 }, { name: "Fredericia", strength: 82 },
+                { name: "Ribe-Esbjerg", strength: 80 }, { name: "Nordsjælland", strength: 78 },
+                { name: "Ringsted", strength: 77 }, { name: "Sønderjyske", strength: 77 },
+                { name: "HOJ", strength: 76 }, { name: "Grindsted", strength: 72 }
+            ]
+        },
+        "NB I (Węgry)": {
+            ihfTier: 1, strength: 88,
+            clubs: [
+                { name: "Veszprem", strength: 95 }, { name: "Szeged", strength: 92 },
+                { name: "Tatabanya", strength: 80 }, { name: "Ferencvaros", strength: 79 },
+                { name: "Balatonfuredi", strength: 78 }, { name: "NEKA", strength: 77 },
+                { name: "PLER", strength: 76 }, { name: "Gyor", strength: 75 },
+                { name: "Gyongyosi", strength: 75 }, { name: "Csurgoi", strength: 74 },
+                { name: "Budai Farkasok", strength: 73 }, { name: "Szigetszentmiklosi", strength: 72 },
+                { name: "Komloi", strength: 73 }, { name: "Budakalasz", strength: 72 }
+            ]
+        },
+        "Handballigan (Szwecja)": {
+            ihfTier: 2, strength: 84,
+            clubs: [
+                { name: "Kristianstad", strength: 84 }, { name: "Malmo", strength: 83 },
+                { name: "Hammarby", strength: 81 }, { name: "Skövde", strength: 82 },
+                { name: "Alingsås", strength: 81 }, { name: "Savehof", strength: 85 },
+                { name: "Ystads IF", strength: 83 }, { name: "Karlskrona", strength: 79 },
+                { name: "Onnered", strength: 78 }, { name: "Amo HK", strength: 76 },
+                { name: "Hallby", strength: 76 }, { name: "Helsingborg", strength: 75 },
+                { name: "Vasteras Irsta HF", strength: 72 }, { name: "Guif", strength: 71 }
+            ]
+        },
+        "REMA 1000-ligaen (Norwegia)": {
+            ihfTier: 2, strength: 83,
+            clubs: [
+                { name: "Elverum", strength: 86 }, { name: "Kolstad", strength: 89 },
+                { name: "Bergen", strength: 80 }, { name: "Drammen", strength: 80 },
+                { name: "Runar", strength: 81 }, { name: "Sandefjord TIF", strength: 78 },
+                { name: "Naerbo", strength: 77 }, { name: "Fjellhammer", strength: 76 },
+                { name: "Arendal", strength: 78 }, { name: "Kristiansand", strength: 76 },
+                { name: "Follo", strength: 74 }, { name: "Sandnes", strength: 73 },
+                { name: "Halden", strength: 73 }, { name: "Baekkelaget", strength: 72 }
+            ]
+        },
+        "Premijer Liga (Region / Bałkany)": {
+            ihfTier: 2, strength: 79,
+            clubs: [
+                { name: "Izvidac", strength: 84 }, { name: "Borac", strength: 83 },
+                { name: "Sloga Doboj", strength: 82 }, { name: "Konjuh", strength: 79 },
+                { name: "Vogosca", strength: 78 }, { name: "Zrinjski Mostar", strength: 77 },
+                { name: "Krivaja", strength: 77 }, { name: "Gorazde", strength: 75 },
+                { name: "Gracanica", strength: 74 }, { name: "Maglaj", strength: 74 },
+                { name: "Bosna Visoko", strength: 74 }, { name: "Derventa", strength: 72 },
+                { name: "Sloboda Tuzla", strength: 70 }, { name: "Leotar", strength: 69 }
+            ]
+        },
+        "1. NL (Słowenia)": {
+            ihfTier: 2, strength: 81,
+            clubs: [
+                { name: "Slovan", strength: 81 }, { name: "Trimo Trebnje", strength: 79 },
+                { name: "Celje", strength: 86 }, { name: "Gorenje", strength: 82 },
+                { name: "Slovenj Gradec", strength: 77 }, { name: "Krka", strength: 76 },
+                { name: "Jeruzalem Ormoz", strength: 75 }, { name: "Loka", strength: 75 },
+                { name: "Ribnica", strength: 76 }, { name: "Skofljica", strength: 72 },
+                { name: "Ivancna Gorica", strength: 71 }, { name: "Radovljica", strength: 70 }
+            ]
+        },
+        "Andebol 1 (Portugalia)": {
+            ihfTier: 2, strength: 81,
+            clubs: [
+                { name: "Sporting", strength: 87 }, { name: "Porto", strength: 88 },
+                { name: "Benfica", strength: 85 }, { name: "Aguas Santas", strength: 80 },
+                { name: "Maritimo", strength: 79 }, { name: "ABC Braga", strength: 78 },
+                { name: "Povoa", strength: 77 }, { name: "Belenenses", strength: 75 },
+                { name: "Vitoria SC", strength: 74 }, { name: "Avanca", strength: 73 },
+                { name: "Gaia", strength: 73 }, { name: "Arsenal", strength: 68 }
+            ]
+        }
+    };
+
+    const polishLeaguesData = {
+        "II Liga Mężczyzn - Gr. 1": [
+            { name: "LKS PR OSiR Komprachcice", strength: 42 }, { name: "UKS Hagard Strzałkowo", strength: 40 },
+            { name: "KS SPR Oleśnica", strength: 41 }, { name: "SPR Włoszakowice", strength: 39 },
+            { name: "KPR ŚRODA WLKP.", strength: 43 }, { name: "WKS ŚLĄSK", strength: 45 },
+            { name: "Szczypiorniak Gniezno", strength: 42 }, { name: "Sowie Żagiew Dzierżoniów", strength: 39 },
+            { name: "Acana Moto-Jelcz II", strength: 38 }, { name: "SMS Zielona Góra", strength: 44 },
+            { name: "GTV BUS Gwardia II", strength: 41 }
+        ],
+        "II Liga Mężczyzn - Gr. 2": [
+            { name: "BSMS Bartoszyce", strength: 42 }, { name: "SMS ZPRP I Kwidzyn", strength: 46 },
+            { name: "Borys Usar Kwidzyn", strength: 44 }, { name: "UKS Alfa 99 Strzelno", strength: 41 },
+            { name: "SPR Wybrzeże II Gdańsk", strength: 43 }, { name: "SMS ZPRP II Kwidzyn", strength: 45 },
+            { name: "Handball Team FENIX Bydgoszcz", strength: 40 }, { name: "SPR Wybrzeże III Gdańsk", strength: 39 },
+            { name: "KS Szczypiorniak II Olsztyn", strength: 38 }
+        ],
+        "II Liga Mężczyzn - Gr. 3": [
+            { name: "SPR Wisła Sandomierz", strength: 43 }, { name: "MKS Biłgoraj", strength: 40 },
+            { name: "KS Szczypiorniak Dąbrowa Białostocka", strength: 39 }, { name: "MKS Padwa Zamość", strength: 44 },
+            { name: "KKS Włókniarz Konstantynów", strength: 41 }, { name: "MOKS Słoneczny Stok", strength: 42 },
+            { name: "KS Niedźwiedzie Suwałki", strength: 38 }
+        ],
+        "II Liga Mężczyzn - Gr. 4": [
+            { name: "ASPR Zawadzkie", strength: 42 }, { name: "KSS ISKRA KIELCE", strength: 45 },
+            { name: "UKS Świt Szaflary", strength: 39 }, { name: "Hutnik Kraków", strength: 41 },
+            { name: "SMS ZPRP III Kielce", strength: 44 }, { name: "Ruch Chorzów Handball", strength: 43 },
+            { name: "MOSiR Bochnia", strength: 40 }, { name: "MKS WiRy Mysłowice", strength: 38 },
+            { name: "UKS Wybicki Kielce", strength: 39 }, { name: "Olimpia Piekary Śląskie", strength: 46 }
+        ],
+        "I Liga Mężczyzn - Gr. A": [
+            { name: "KPR Żukowo", strength: 58 }, { name: "Warmia Olsztyn", strength: 57 }, { name: "Jeziorak Iława", strength: 53 },
+            { name: "MKS Grudziądz", strength: 54 }, { name: "UKS Morąg", strength: 52 }, { name: "Tytani Wejherowo", strength: 55 },
+            { name: "AZS Bydgoszcz", strength: 53 }, { name: "SMS Kwidzyn", strength: 56 }, { name: "Wybrzeże Gdańsk", strength: 59 },
+            { name: "Silvant Elbląg", strength: 52 }, { name: "Sparta Oborniki", strength: 51 }, { name: "Sambor Tczew", strength: 50 }
+        ],
+        "I Liga Mężczyzn - Gr. B": [
+            { name: "SPR Kąty Wrocławskie", strength: 56 }, { name: "SPR Oborniki Śląskie", strength: 54 }, { name: "UKS Grodków", strength: 53 },
+            { name: "Zew Świebodzin", strength: 55 }, { name: "Trójka Nowa Sól", strength: 52 }, { name: "Olimp Zielona Góra", strength: 57 },
+            { name: "Grunwald Poznań II", strength: 51 }, { name: "Wolsztyniak Wolsztyn", strength: 52 }, { name: "Astromal Leszno", strength: 58 },
+            { name: "Gryfino", strength: 50 }, { name: "ŚKPR Świdnica", strength: 53 }, { name: "Tęcza Kościan", strength: 51 }
+        ],
+        "I Liga Mężczyzn - Gr. C": [
+            { name: "KSSPR Końskie", strength: 55 }, { name: "Orlęta Zwoleń", strength: 52 }, { name: "MKS Wieluń", strength: 56 },
+            { name: "Podlasie Nowe Piekuty", strength: 51 }, { name: "Mazur Sierpc", strength: 53 }, { name: "MTS Lider Radom", strength: 52 },
+            { name: "Warszawianka", strength: 54 }, { name: "SMS Płock", strength: 57 }, { name: "AZS UMCS Lublin", strength: 53 },
+            { name: "AZS AWF Warszawa", strength: 52 }, { name: "Pabianice", strength: 50 }
+        ],
+        "I Liga Mężczyzn - Gr. D": [
+            { name: "Olimpia Piekary Śląskie", strength: 58 }, { name: "Viret Zawiercie", strength: 55 }, { name: "Orzeł Przeworsk", strength: 52 },
+            { name: "Zagłębie Sosnowiec", strength: 54 }, { name: "Handball Pałac Tarnów", strength: 56 }, { name: "KSZO Ostrowiec", strength: 53 },
+            { name: "SMS Kielce", strength: 57 }, { name: "MTS Chrzanów", strength: 52 }, { name: "Grunwald Ruda Śląska", strength: 51 },
+            { name: "Moto-Jelcz Oława", strength: 50 }
+        ],
+        "Liga Centralna": [
+            { name: "WKS Śląsk Wrocław", strength: 68 }, { name: "Sandra Spa Pogoń Szczecin", strength: 67 }, { name: "AZS AGH Kraków", strength: 65 },
+            { name: "Stal Gorzów", strength: 69 }, { name: "Grunwald Poznań", strength: 66 }, { name: "Jurand Ciechanów", strength: 64 },
+            { name: "Biała Podlaska", strength: 63 }, { name: "Padwa Zamość", strength: 65 }, { name: "Nielba Wągrowiec", strength: 64 },
+            { name: "Siódemka Legnica", strength: 63 }, { name: "SMS Kielce", strength: 62 }, { name: "Anilana Łódź", strength: 64 },
+            { name: "Gwardia Koszalin", strength: 63 }, { name: "AZS UW Warszawa", strength: 61 }
+        ],
+        "Orlen Superliga": [
+            { name: "ORLEN Wisła Płock", strength: 92, cl: true }, { name: "Industria Kielce", strength: 91, cl: true },
+            { name: "KPR Ostrovia", strength: 76 }, { name: "Wybrzeże Gdańsk", strength: 77 },
+            { name: "Chrobry Głogów", strength: 78 }, { name: "MMTS Kwidzyn", strength: 75 },
+            { name: "MKS Kalisz", strength: 74 }, { name: "Stal Mielec", strength: 72 },
+            { name: "KPR Legionowo", strength: 73 }, { name: "Gwardia Opole", strength: 77 },
+            { name: "Piotrkowianin", strength: 73 }, { name: "KS Azoty-Puławy", strength: 80 }
+        ]
+    };
+
+    function getIILeagueGroup(voiv) {
+        if (["śląskie", "małopolskie", "świętokrzyskie", "podkarpackie"].includes(voiv)) return "II Liga Mężczyzn - Gr. 4";
+        if (["dolnośląskie", "opolskie", "wielkopolskie", "lubuskie"].includes(voiv)) return "II Liga Mężczyzn - Gr. 1";
+        if (["pomorskie", "kujawsko-pomorskie", "warmińsko-mazurskie", "zachodniopomorskie"].includes(voiv)) return "II Liga Mężczyzn - Gr. 2";
+        return "II Liga Mężczyzn - Gr. 3"; 
+    }
+
+    function setBestAchievement(title, tier) {
+        if (tier > player.bestAchievementTier) {
+            player.bestAchievementTier = tier;
+            player.bestAchievement = title;
+        }
+    }
+
+    function goToOffers() {
+        const nameInput = document.getElementById('char-name');
+        const voivSelect = document.getElementById('char-voivodeship');
+        const posSelect = document.getElementById('char-position');
+        const handSelect = document.getElementById('char-hand');
+        const tierSelect = document.getElementById('char-start-tier');
+        const diffSelect = document.getElementById('char-difficulty');
+
+        player.name = nameInput ? nameInput.value : "Iwan Balicki";
+        player.voivodeship = voivSelect ? voivSelect.value : "śląskie";
+        player.position = posSelect ? posSelect.value : "CTR";
+        player.hand = handSelect ? handSelect.value : "prawa";
+        player.difficulty = diffSelect ? diffSelect.value : "hard";
+        player.ovr = tierSelect ? parseInt(tierSelect.value) : 48;
+        
+        document.getElementById('screen-creator').style.display = 'none';
+        let offersContainer = document.getElementById('screen-offers');
+        offersContainer.style.display = 'block';
+
+        let assignedGroup = getIILeagueGroup(player.voivodeship);
+        let groupList = polishLeaguesData[assignedGroup] || [];
+        let group1BList = polishLeaguesData["I Liga Mężczyzn - Gr. B"] || [];
+        let centralList = polishLeaguesData["Liga Centralna"] || [];
+
+        let localTeamObj = groupList[Math.floor(Math.random() * groupList.length)] || {name: "Klub Lokalny", strength: 42};
+        let higherTeamObj = group1BList[Math.floor(Math.random() * group1BList.length)] || {name: "Klub I Ligi", strength: 58};
+        let centralTeamObj = centralList[Math.floor(Math.random() * centralList.length)] || {name: "Klub Centralny", strength: 68};
+
+        offersContainer.innerHTML = `
+            <div class="brand-header">
+                <div style="font-size: 1.5rem; color: var(--zprp-red); margin-bottom: 5px;">📋</div>
+                <div class="sub">Wybór Pierwszego Kontraktu (${assignedGroup})</div>
+                <h2>Masz Trzy Oferty</h2>
+            </div>
+            <p style="font-size:0.9rem; color:#555; margin-bottom:15px; text-align:center;">Wybierz klub ze swojego regionu lub wyższego szczebla.</p>
+
+            <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
+                <strong style="font-size:1.05rem;">${localTeamObj.name}</strong>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">${assignedGroup} (Wysoka szansa na grę)</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>1 500 zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${localTeamObj.name}', '${assignedGroup}', ${localTeamObj.strength}, 1500)">Podpisz Kontrakt</button>
+            </div>
+
+            <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
+                <strong style="font-size:1.05rem;">${higherTeamObj.name}</strong>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">I Liga Mężczyzn - Gr. B (Średnia szansa)</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>3 500 zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${higherTeamObj.name}', 'I Liga Mężczyzn - Gr. B', ${higherTeamObj.strength}, 3500)">Podpisz Kontrakt</button>
+            </div>
+
+            <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
+                <strong style="font-size:1.05rem;">${centralTeamObj.name}</strong>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Liga Centralna (Niska szansa / Walka)</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>6 000 zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${centralTeamObj.name}', 'Liga Centralna', ${centralTeamObj.strength}, 6000)">Podpisz Kontrakt</button>
+            </div>
+        `;
+    }
+
+    function acceptInitialContract(club, league, tOvr, salary) {
+        player.club = club;
+        player.league = league;
+        player.teamOVR = tOvr;
+        player.salaryNum = salary;
+        
+        let isForeign = !!foreignLeaguesData[league];
+        let pData = isForeign ? foreignLeaguesData[league].clubs : polishLeaguesData[league];
+        let clubData = pData.find(c => c.name === club);
+        if (clubData && clubData.cl) player.qualifiedForCL = true;
+
+        document.getElementById('screen-offers').style.display = 'none';
+        document.getElementById('game-layout').style.display = 'grid';
+
+        historyLog.push(`<strong>${player.age} LAT (${player.currentYear})</strong> — Kontrakt z ${club}.<br><span style='color:#666; font-size:0.75rem;'>${league}</span>`);
+        player.historyPoints += 10;
+        updateSidebar();
+        checkRehabBanner();
+    }
+
+    function updateSidebar() {
+        document.getElementById('sidebar-name').innerText = player.name;
+        document.getElementById('sidebar-voivodeship').innerText = player.voivodeship.toUpperCase();
+        document.getElementById('sidebar-ovr').innerText = player.ovr;
+        document.getElementById('sidebar-age').innerText = player.age;
+        document.getElementById('sidebar-year').innerText = player.currentYear;
+        document.getElementById('sidebar-club').innerText = player.club;
+        document.getElementById('sidebar-league').innerText = player.league;
+        document.getElementById('sidebar-salary').innerText = player.salaryNum.toLocaleString() + " zł";
+        document.getElementById('sidebar-total-earned').innerText = player.totalEarned.toLocaleString() + " zł";
+        document.getElementById('sidebar-prof').innerText = player.prof + "/100";
+        document.getElementById('sidebar-media').innerText = player.media + "/100";
+        document.getElementById('sidebar-injury').innerText = player.injuryRisk + "%";
+        document.getElementById('history-points').innerText = player.historyPoints + " PKT";
+        document.getElementById('sidebar-form').innerText = player.form + "/100 (" + player.formTrend + ")";
+        document.getElementById('sidebar-rep').innerText = player.national.called ? "POWOŁANY • " + player.national.role : player.national.role;
+        document.getElementById('sidebar-rep-caps').innerText = player.national.caps + " / " + player.national.goals;
+        document.getElementById('sidebar-best-achievement').innerText = player.bestAchievement;
+    }
+
+    function checkRehabBanner() {
+        let banner = document.getElementById('injury-warning-box');
+        if (!banner) return;
+        if (player.injuryRisk >= 25) {
+            banner.style.display = 'block';
+            document.getElementById('injury-risk-val').innerText = player.injuryRisk;
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    function doRehab() {
+        if (player.totalEarned < 5000 && player.salaryNum < 5000) {
+            alert("Brak wystarczających środków finansowych na prywatną klinikę (5 000 zł)!");
+            return;
+        }
+        player.totalEarned = Math.max(0, player.totalEarned - 5000);
+        player.injuryRisk = Math.max(5, player.injuryRisk - 20);
+        player.form = Math.min(99, player.form + 10);
+        alert("Pomyślnie zrehabilitowano organizm! Ryzyko urazu drastycznie spadło, a forma rośnie.");
+        updateSidebar();
+        checkRehabBanner();
+    }
+
+    function updateFormAfterSeason(finalPos, totalTeams) {
+        let delta = Math.floor(Math.random() * 13) - 6; 
+        if (totalTeams > 0) {
+            if (finalPos <= Math.ceil(totalTeams / 3)) delta += 4;
+            else if (finalPos >= totalTeams - Math.ceil(totalTeams / 3) + 1) delta -= 4;
+        }
+        if (player.injuryRisk > 20) delta -= 2;
+
+        let oldForm = player.form;
+        player.form = Math.max(10, Math.min(99, player.form + delta));
+        if (player.form > oldForm + 2) player.formTrend = "rosnąca";
+        else if (player.form < oldForm - 2) player.formTrend = "spadająca";
+        else player.formTrend = "stabilna";
+    }
+
+    function playSeason() {
+        seasonStats.awards = []; 
+        let trainingSelect = document.getElementById('training-focus-select');
+        let selectedStat = trainingSelect ? trainingSelect.value : 'gra1v1';
+        let statIncrease = Math.floor(Math.random() * 3) + 1;
+        
+        let oldStatVal = player.stats[selectedStat] || 50;
+        if (player.stats[selectedStat] !== undefined) {
+            player.stats[selectedStat] = Math.min(99, player.stats[selectedStat] + statIncrease);
+        }
+        let statNameMap = { "rzut": "Rzut", "gra1v1": "Technika (1v1)", "iq": "Przegląd pola (IQ)", "obrona": "Obrona" };
+        let trainingMsg = `Trening: ${statNameMap[selectedStat]} wzrasta z ${oldStatVal} do ${player.stats[selectedStat]} (+${statIncrease}).`;
+
+        let isForeignLeague = !!foreignLeaguesData[player.league];
+        let rawTeams = isForeignLeague
+            ? foreignLeaguesData[player.league].clubs
+            : (polishLeaguesData[player.league] ? polishLeaguesData[player.league] : polishLeaguesData["II Liga Mężczyzn - Gr. 4"]);
+        let leagueTeams = [...rawTeams];
+
+        let teamNames = leagueTeams.map(t => typeof t === 'object' ? t.name : t);
+        if (!teamNames.includes(player.club)) leagueTeams.push({ name: player.club, strength: player.teamOVR || 42 });
+
+        let totalTeamsCount = leagueTeams.length;
+        let fullMatches = (totalTeamsCount - 1) * 2;
+
+        let injuryRoll = Math.random() * 100;
+        let gotInjured = (injuryRoll < player.injuryRisk);
+        let injuryNote = "";
+
+        let playedMatches = fullMatches;
+        if (gotInjured) {
+            playedMatches = Math.floor(fullMatches * (0.3 + Math.random() * 0.4));
+            injuryNote = " ⚠️ CIĘŻKA KONTUZJA! Pauzowałeś przez dużą część sezonu.";
+            player.form = Math.max(10, player.form - 20);
+        }
+
+        let minutes = playedMatches * (Math.floor(Math.random() * 10) + 40);
+        let formMultiplier = 0.8 + (player.form / 100) * 0.4;
+        let goals = Math.floor((Math.floor(player.ovr * 1.8) + Math.floor(Math.random() * 20)) * formMultiplier * (playedMatches / fullMatches));
+        let assists = Math.floor((player.stats.iq * 0.6 + Math.floor(Math.random() * 20)) * formMultiplier * (playedMatches / fullMatches));
+
+        player.careerStats.matches += playedMatches;
+        player.careerStats.goals += goals;
+        player.careerStats.assists += assists;
+
+        let leagueBaseOVR = 42;
+        if (player.league.includes("I Liga")) leagueBaseOVR = 56;
+        if (player.league.includes("Centralna")) leagueBaseOVR = 68;
+        if (player.league.includes("Superliga")) leagueBaseOVR = 80;
+        if (isForeignLeague) leagueBaseOVR = foreignLeaguesData[player.league].strength;
+
+        let oldOvr = player.ovr;
+        let stagnationNote = "";
+
+        if (player.age >= 33) {
+            let drop = Math.floor((player.age - 31) / 2);
+            player.ovr = Math.max(30, player.ovr - drop);
+            stagnationNote = " (Spadek umiejętności - wiek)";
+        } else if (gotInjured) {
+            stagnationNote = " (Brak rozwoju - kontuzja)";
+        } else if (player.difficulty === "hard" && player.ovr >= leagueBaseOVR + 15) {
+            stagnationNote = " 🛑 STAGNACJA! Zbyt słaba liga na rozwój.";
+        } else {
+            let ovrGain = Math.floor(Math.random() * 3) + (player.difficulty === "easy" ? 2 : 1);
+            player.ovr = Math.min(99, player.ovr + ovrGain);
+        }
+
+        player.age += 1;
+        player.currentYear += 1;
+        player.media += Math.floor(Math.random() * 4);
+        player.totalEarned += player.salaryNum * 12;
+        player.historyPoints += 25;
+
+        let baseTeamOVR = player.teamOVR || leagueBaseOVR;
+        let ovrDiff = player.ovr - baseTeamOVR;
+        
+        let posMultiplier = (player.position === "GK" || player.position === "CTR") ? 1.5 : 0.7; 
+        let carryMultiplier = player.league.includes("II Liga") ? 1.2 : (player.league.includes("I Liga") ? 0.6 : 0.2);
+
+        let carryBonus = Math.max(0, Math.floor(ovrDiff * carryMultiplier * posMultiplier));
+        let effectiveTeamOVR = baseTeamOVR + carryBonus;
+
+        currentSeasonTable = leagueTeams.map(t => {
+            let teamName = typeof t === 'object' ? t.name : t;
+            let baseStrength = typeof t === 'object' ? t.strength : leagueBaseOVR;
+            let isPlayerTeam = (teamName === player.club);
+            
+            let finalBaseStrength = baseStrength;
+            if (teamName === "ORLEN Wisła Płock" || teamName === "Industria Kielce" || teamName === "Kiel" || teamName === "SC Magdeburg" || teamName === "PSG" || teamName === "FC Barcelona Handbol") {
+                finalBaseStrength = Math.max(baseStrength, 91);
+            }
+
+            let strength = isPlayerTeam ? effectiveTeamOVR : (finalBaseStrength + Math.floor(Math.random() * 6) - 3);
+            let w = Math.floor((strength / 100) * (fullMatches * 0.6)) + Math.floor(Math.random() * 3);
+            let wd = Math.floor(Math.random() * 3);
+            let ld = Math.floor(Math.random() * 3);
+            let l = fullMatches - w - wd - ld;
+            if (l < 0) l = 0;
+            let pts = (w * 3) + (wd * 2) + (ld * 1);
+            return { name: teamName, m: w + wd + ld + l, w, wd, ld, l, pts };
+        });
+
+        currentSeasonTable.sort((a, b) => b.pts - a.pts);
+        seasonStats.finalPos = currentSeasonTable.findIndex(t => t.name === player.club) + 1;
+
+        player.isChampion = false;
+        player.isPlayoffSpot = false;
+        player.isRelegated = false;
+        let willPlayCLNextYear = false;
+
+        if (isForeignLeague) {
+            let d = foreignLeaguesData[player.league];
+            if (seasonStats.finalPos === 1) {
+                player.isChampion = true;
+                setBestAchievement(`Mistrz - ${player.league.split(" (")[0]}`, d.ihfTier === 1 ? 4 : 3);
+            }
+            if (d.ihfTier === 1 && seasonStats.finalPos <= 2) willPlayCLNextYear = true;
+            if (d.ihfTier === 2 && seasonStats.finalPos === 1) willPlayCLNextYear = true;
+        } else {
+            if (player.league.includes("II Liga")) {
+                player.isChampion = (seasonStats.finalPos === 1);
+            } else if (player.league.includes("I Liga")) {
+                player.isPlayoffSpot = (seasonStats.finalPos === 1 || seasonStats.finalPos === 2);
+                player.isRelegated = (seasonStats.finalPos === totalTeamsCount);
+            } else if (player.league.includes("Liga Centralna")) {
+                player.isChampion = (seasonStats.finalPos === 1);
+                player.isPlayoffSpot = (seasonStats.finalPos === 2);
+                player.isRelegated = (seasonStats.finalPos >= totalTeamsCount - 1);
+            } else if (player.league.includes("Superliga")) {
+                if (seasonStats.finalPos === 1) {
+                    player.isChampion = true;
+                    setBestAchievement("Mistrz Polski", 3);
+                }
+                player.isPlayoffSpot = (seasonStats.finalPos === totalTeamsCount - 2);
+                player.isRelegated = (seasonStats.finalPos >= totalTeamsCount - 1);
+                if (seasonStats.finalPos <= 2) willPlayCLNextYear = true;
+            }
+        }
+
+        let promotionText = "Sezon ukończony.";
+        if (player.isChampion && !player.isPlayoffSpot) promotionText = "MISTRZOSTWO!";
+        else if (player.isPlayoffSpot) promotionText = "MIEJSCE BARAŻOWE!";
+        else if (player.isRelegated) promotionText = "SPADEK DO NIŻSZEJ LIGI!";
+
+        historyLog.push(`<strong>${player.age} LAT (${player.currentYear})</strong> — ${player.club}: Miejsce ${seasonStats.finalPos} • ${promotionText}${injuryNote}`);
+
+        if (!gotInjured && goals > playedMatches * 5) {
+            seasonStats.awards.push("Król Strzelców");
+            player.historyPoints += 30;
+        }
+        if (seasonStats.finalPos <= 3 && carryBonus > 8 && !gotInjured) {
+            seasonStats.awards.push("MVP Ligi");
+            player.historyPoints += 50;
+        }
+
+        updateFormAfterSeason(seasonStats.finalPos, totalTeamsCount);
+
+        let cupResult = simulateDomesticCup(isForeignLeague);
+        let clResult = null;
+        
+        if (player.qualifiedForCL) {
+            clResult = simulateChampionsLeague();
+        }
+        player.qualifiedForCL = willPlayCLNextYear; 
+
+        player.pendingTournamentData = checkNationalCallup();
+
+        updateSidebar();
+        checkRehabBanner();
+
+        cachedSeasonRender = {
+            m: playedMatches, g: goals, a: assists, min: minutes, 
+            oldOvr: oldOvr, newOvr: player.ovr, 
+            trainingMsg: trainingMsg + stagnationNote + injuryNote, 
+            cupResult: cupResult, clResult: clResult
+        };
+
+        if (player.pendingTournamentData && player.pendingTournamentData.isMajorTournament) {
+            document.getElementById('subscreen-preseason').style.display = 'none';
+            document.getElementById('screen-tournament-decision').style.display = 'block';
+            document.getElementById('tournament-decision-title').innerText = player.pendingTournamentData.tournamentName;
+        } else {
+            renderPostSeasonScreen(playedMatches, goals, assists, minutes, oldOvr, player.ovr, trainingMsg + stagnationNote + injuryNote, cupResult, clResult, null);
+        }
+    }
+
+    function simulateDomesticCup(isForeign) {
+        let cupName = isForeign ? "Krajowy Puchar" : "Puchar Polski";
+        if (isForeign && player.league.includes("Niemcy")) cupName = "DHB-Pokal";
+        if (isForeign && player.league.includes("Francja")) cupName = "Coupe de France";
+
+        let rounds = ["1/16 finału", "1/8 finału", "Ćwierćfinał", "Półfinał", "FINAŁ"];
+        
+        let pool = [];
+        if (isForeign) {
+            let countryTag = player.league.split("(")[1];
+            Object.entries(foreignLeaguesData).forEach(([lname, ldata]) => {
+                if (lname.includes("(" + countryTag)) pool.push(...ldata.clubs);
+            });
+            if (pool.length === 0) pool = foreignLeaguesData[player.league].clubs; 
+        } else {
+            Object.values(polishLeaguesData).forEach(leagueArr => pool.push(...leagueArr));
+        }
+
+        let teamStrength = (player.teamOVR || 45) + Math.floor((player.ovr - (player.teamOVR || 45)) * 0.6);
+        let won = true;
+        let eliminatedAt = "";
+        let matchLog = [];
+
+        let startRound = 0;
+        if (player.league.includes("Superliga") || (isForeign && foreignLeaguesData[player.league].ihfTier <= 2)) startRound = 1;
+
+        for (let i = startRound; i < rounds.length; i++) {
+            let oppPool = pool;
+            if (!isForeign) {
+                if (i >= 2) oppPool = pool.filter(t => t.strength > 60);
+                if (i >= 3) oppPool = pool.filter(t => t.strength > 80); 
+                if (oppPool.length === 0) oppPool = pool;
+            }
+
+            let opponent = oppPool[Math.floor(Math.random() * oppPool.length)];
+            let finalOppStrength = opponent.name.includes("Kielce") || opponent.name.includes("Płock") || opponent.name.includes("Kiel") || opponent.name.includes("Barcelona") ? Math.max(opponent.strength, 90) : opponent.strength;
+            
+            let winChance = 0.5 + ((teamStrength - finalOppStrength) / 100);
+            winChance = Math.max(0.05, Math.min(0.95, winChance));
+            
+            let isWin = Math.random() < winChance;
+            let scoreStr = isWin ? `${Math.floor(Math.random()*5)+27}:${Math.floor(Math.random()*5)+22}` : `${Math.floor(Math.random()*5)+22}:${Math.floor(Math.random()*5)+30}`;
+
+            matchLog.push(`<strong>${rounds[i]}:</strong> vs ${opponent.name} (${scoreStr}) - <span style="color:${isWin?'green':'red'}">${isWin?'WYGRANA':'PORAŻKA'}</span>`);
+
+            if (!isWin) { won = false; eliminatedAt = rounds[i]; break; }
+        }
+
+        if (won) setBestAchievement(`Zwycięzca: ${cupName}`, 2);
+        return { name: cupName, won: won, resultLabel: won ? "ZWYCIĘSTWO W PUCHARZE!" : `Odpadł: ${eliminatedAt}`, logHtml: matchLog.join("<br>") };
+    }
+
+    function simulateChampionsLeague() {
+        let teamStrength = (player.teamOVR || 80) + Math.floor((player.ovr - (player.teamOVR || 80)) * 0.4);
+        let matchLog = [];
+        let won = false;
+        let exitStage = "Faza Grupowa";
+
+        let clOpponents = ["Kiel", "SC Magdeburg", "PSG", "Nantes", "FC Barcelona Handbol", "Aalborg", "GOG", "Veszprem", "Szeged", "Sporting"];
+        function getClOpp() { return clOpponents[Math.floor(Math.random() * clOpponents.length)]; }
+
+        let clAvgGrpStrength = 85;
+        let pts = 0;
+        let grpOpps = [getClOpp(), getClOpp(), getClOpp()];
+        for(let i=0; i<14; i++) {
+            let winChance = 0.5 + ((teamStrength - clAvgGrpStrength) / 100);
+            if (Math.random() < winChance) pts += 2;
+            else if (Math.random() < 0.1) pts += 1;
+        }
+        matchLog.push(`<strong>Faza Grupowa:</strong> Rywalizacja m.in. z ${grpOpps[0]}, ${grpOpps[1]}. Zdobyto ${pts} pkt.`);
+
+        if (pts > 14) {
+            let stages = ["1/8 finału", "Ćwierćfinał", "Półfinał (FINAL4)", "FINAŁ LM"];
+            won = true;
+            for(let i=0; i<stages.length; i++) {
+                let oppStr = 88 + (i * 2); 
+                let winChance = 0.5 + ((teamStrength - oppStr) / 100);
+                let isWin = Math.random() < winChance;
+                let score = isWin ? `32:29` : `28:31`;
+                let opName = getClOpp();
+                matchLog.push(`<strong>${stages[i]}:</strong> vs ${opName} (${score}) - <span style="color:${isWin?'green':'red'}">${isWin?'WYGRANA':'PORAŻKA'}</span>`);
+                if (!isWin) { won = false; exitStage = stages[i]; break; }
+            }
+        }
+
+        if (won) {
+            setBestAchievement(`Zwycięzca Ligi Mistrzów EHF`, 5);
+            player.historyPoints += 200;
+        }
+
+        if (pts > 10 && Math.random() < 0.2) {
+            seasonStats.awards.push(`EHF Top 5 ${player.position === 'GK' ? 'Saves' : 'Goals'}`);
+            player.media += 15;
+        }
+
+        return { won: won, resultLabel: won ? "ZWYCIĘZCA LIGI MISTRZÓW!" : `Odpadł: ${exitStage}`, logHtml: matchLog.join("<br>") };
+    }
+
+    function checkNationalCallup() {
+        player.national.called = false;
+        let roleTier = "Brak powołania";
+        
+        if (player.age <= 19 && player.ovr >= 55) roleTier = "Kadra U-19";
+        else if (player.age <= 21 && player.ovr >= 65) roleTier = "Kadra U-21";
+        else if (player.ovr >= 75) roleTier = "Kadra A (Seniorzy)";
+
+        if (roleTier === "Brak powołania") return null;
+
+        player.national.called = true;
+        player.national.capped = true;
+        player.national.role = roleTier;
+
+        let windowMatches = (roleTier === "Kadra A (Seniorzy)") ? (2 + Math.floor(Math.random() * 3)) : 2;
+        let windowGoals = Math.floor(Math.random() * windowMatches * 4);
+        
+        let data = { roleTier, windowMatches, windowGoals, isMajorTournament: false, tournamentName: "" };
+
+        if (roleTier === "Kadra A (Seniorzy)") {
+            if (player.currentYear % 2 === 0) {
+                data.isMajorTournament = true;
+                data.tournamentName = "EHF EURO " + player.currentYear;
+            } else {
+                data.isMajorTournament = true;
+                data.tournamentName = "IHF World Championship " + player.currentYear;
+            }
+        }
+        return data;
+    }
+
+    function resolveTournament(mode) {
+        document.getElementById('screen-tournament-decision').style.display = 'none';
+        
+        let tName = player.pendingTournamentData.tournamentName;
+        let outcomeMsg = "";
+        let medal = false;
+
+        let ntPool = [...nationalTeamsPowerRanking].filter(t => t.name !== "Polska");
+        function getNTOpp() { 
+            if(ntPool.length === 0) return "Zespół X";
+            return ntPool.splice(Math.floor(Math.random() * ntPool.length), 1)[0].name; 
+        }
+
+        let basePolska = 85 + (player.ovr - 80) * 0.5;
+        let runChance = Math.random() * 100;
+        
+        if (mode === 'gladiator') basePolska += 10;
+        if (mode === 'rest') basePolska -= 15;
+
+        let stageReached = "";
+        let matchesPlayed = 0;
+        let tMatchLog = [];
+
+        if (basePolska < 75 || runChance < 20) {
+            stageReached = "Faza Grupowa (Odpadnięcie)";
+            matchesPlayed = 3;
+            tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`vs ${getNTOpp()} (PORAŻKA)`);
+            outcomeMsg = "Szybki powrót po słabej fazie grupowej.";
+        } else if (runChance < 50) {
+            stageReached = "Faza Zasadnicza / Runda Główna";
+            matchesPlayed = 5;
+            tMatchLog.push(`Grupa: Awans (2 wygrane, 1 porażka)`);
+            tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`Faza Zasadnicza vs ${getNTOpp()} (REMIS)`);
+            outcomeMsg = "Solidny turniej, ale brakło jakości na ćwierćfinał.";
+        } else if (runChance < 75) {
+            stageReached = "Ćwierćfinał";
+            matchesPlayed = 7;
+            tMatchLog.push(`Faza grupowa i zasadnicza: Pewny awans!`);
+            tMatchLog.push(`Ćwierćfinał vs ${getNTOpp()} (PORAŻKA po walce)`);
+            outcomeMsg = "Polska w najlepszej ósemce! Odpadacie w 1/4 finału.";
+        } else if (runChance < 90) {
+            stageReached = "Półfinał (Brak Medalu)";
+            matchesPlayed = 9;
+            tMatchLog.push(`Grupa/Zasadnicza: Dominacja!`);
+            tMatchLog.push(`Ćwierćfinał vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`Półfinał vs ${getNTOpp()} (PORAŻKA)`);
+            tMatchLog.push(`Mecz o 3. miejsce vs ${getNTOpp()} (PORAŻKA)`);
+            outcomeMsg = "Historyczny wynik, ale zajmujecie 4. miejsce.";
+        } else {
+            stageReached = "MEDAL!";
+            matchesPlayed = 9;
+            medal = true;
+            tMatchLog.push(`Droga do Final4: Zwycięstwa nad potęgami!`);
+            tMatchLog.push(`Półfinał vs ${getNTOpp()} (WYGRANA)`);
+            tMatchLog.push(`Finał / O brąz vs ${getNTOpp()} (ZWYCIĘSTWO)`);
+            outcomeMsg = "NIESAMOWITE! Polska zdobywa medal wielkiej imprezy!";
+        }
+
+        let goalsPerMatch = Math.floor(player.ovr * 0.08) + (mode === 'gladiator' ? 2 : 0);
+        let tGoals = matchesPlayed * goalsPerMatch + Math.floor(Math.random() * 5);
+
+        if (mode === 'gladiator') {
+            player.injuryRisk += 25; player.form -= 15;
+            if (medal || matchesPlayed >= 7) { player.media += 25; seasonStats.awards.push("All-Star Team " + tName); }
+        } else if (mode === 'normal') {
+            player.injuryRisk += 5;
+        } else if (mode === 'rest') {
+            player.prof -= 10; player.media -= 10; player.form += 10;
+        }
+
+        if (medal) setBestAchievement(`Medalista ${tName}`, 4);
+
+        player.pendingTournamentData.tournamentResultMsg = `
+            <strong>Decyzja:</strong> ${mode.toUpperCase()} - ${outcomeMsg}<br>
+            <div style="margin-top:8px; border-top:1px solid #ccc; padding-top:8px;">
+                <strong>Etap:</strong> ${stageReached}<br>
+                <strong>Rozegrane mecze:</strong> ${matchesPlayed} | <strong>Rzucone bramki:</strong> ${tGoals}<br>
+                <strong>Kluczowe spotkania:</strong><br>
+                <span style="font-size:0.75rem; color:#555;">${tMatchLog.join("<br>")}</span>
+            </div>
+        `;
+        
+        player.national.caps += matchesPlayed;
+        player.national.goals += tGoals;
+
+        renderPostSeasonScreen(true);
+    }
+
+    let cachedSeasonRender = {};
+    
+    function renderPostSeasonScreen(m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult) {
+        if (m === true) { 
+            ({m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult} = cachedSeasonRender);
+        } else if (m !== undefined) { 
+            cachedSeasonRender = {m, g, a, min, oldOvr, newOvr, trainingMsg, cupResult, clResult};
+        }
+
+        document.getElementById('subscreen-preseason').style.display = 'none';
+        
+        document.getElementById('panel-main-title').innerText = "Podsumowanie Sezonu";
+        document.getElementById('panel-season-title').innerText = "PANEL SEZONOWY • " + player.club;
+
+        let postContainer = document.getElementById('subscreen-postseason');
+        postContainer.style.display = 'block';
+
+        let tableHtml = `<table style="width:100%; border-collapse:collapse; font-size:0.85rem; background:#f9f9f9; border:1px solid #ddd; margin-top:15px;">
+            <tr style="background:#1b1b1b; color:#fff;">
+                <th style="padding:6px;">Poz</th><th style="text-align:left; padding:6px;">Drużyna</th><th style="padding:6px;">Pkt</th>
+            </tr>`;
+
+        currentSeasonTable.forEach((t, idx) => {
+            let rowBg = (t.name === player.club) ? 'background:#ffdddd; font-weight:bold;' : '';
+            tableHtml += `<tr style="${rowBg} border-bottom:1px solid #ddd;"><td style="padding:6px; text-align:center;">${idx + 1}</td><td style="padding:6px;">${t.name}</td><td style="padding:6px; text-align:center; color:var(--zprp-red);"><strong>${t.pts}</strong></td></tr>`;
+        });
+        tableHtml += `</table>`;
+
+        let cupHtml = `<div style="background:var(--zprp-gray); border:1px solid var(--zprp-border); padding:15px; margin-bottom:15px; border-radius:4px;">
+            <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px;">🏆 ${cupResult.name}</div>
+            <strong style="font-size:0.95rem; color:var(--zprp-red);">${cupResult.resultLabel}</strong>
+            <div style="font-size:0.8rem; margin-top:8px; line-height:1.4;">${cupResult.logHtml}</div>
+        </div>`;
+
+        let clHtml = clResult ? `<div style="background:#fffdf0; border:1px solid #e0d060; border-left: 4px solid #d4af37; padding:15px; margin-bottom:15px; border-radius:4px;">
+            <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px; color:#856404;">🇪🇺 EHF Champions League</div>
+            <strong style="font-size:0.95rem;">${clResult.resultLabel}</strong>
+            <div style="font-size:0.8rem; margin-top:8px; line-height:1.4;">${clResult.logHtml}</div>
+        </div>` : "";
+
+        let repHtml = "";
+        if (player.pendingTournamentData) {
+            let pd = player.pendingTournamentData;
+            repHtml = `<div style="background:var(--zprp-gray); border:1px solid var(--zprp-border); padding:15px; margin-bottom:15px; border-radius:4px;">
+                <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px;">🇵🇱 Reprezentacja Polski (${pd.roleTier})</div>
+                <p style="font-size:0.85rem; margin:0; color:#555;">Zagrałeś w oknie: ${pd.windowMatches} meczów, rzucając ${pd.windowGoals} bramek.</p>
+                ${pd.tournamentResultMsg ? `<div style="margin-top:5px; padding:8px; background:#eef5ff; border-left:3px solid #005a9c; font-size:0.8rem;">${pd.tournamentResultMsg}</div>` : ""}
+            </div>`;
+        }
+
+        let awardsHtml = "";
+        if (seasonStats.awards.length > 0) {
+            awardsHtml = `<div style="background:#fef9e7; border:1px solid #f1c40f; padding:15px; margin-bottom:15px; border-radius:4px; text-align:center;">
+                <div style="font-family:'Oswald'; text-transform:uppercase; color:#b7950b; margin-bottom:5px;">Gala Rozdania Nagród ZPRP / EHF</div>
+                <strong style="color:var(--zprp-dark);">${seasonStats.awards.join(" 🏆 ")}</strong>
+            </div>`;
+        }
+
+        let pendingEvent = eventsDatabase[Math.floor(Math.random() * eventsDatabase.length)];
+        let decisionHtml = `
+            <div class="decision-box">
+                <div style="font-size:0.75rem; text-transform:uppercase; font-weight:bold; color:var(--zprp-red);">Wydarzenie Losowe w Twoim Życiu</div>
+                <div style="font-family:'Oswald'; font-size:1.1rem; margin:5px 0;">${pendingEvent.title}</div>
+                <p style="font-size:0.85rem; margin-bottom:10px;">${pendingEvent.desc}</p>
+                <div id="event-buttons-container">
+                    <button class="decision-btn" onclick="resolveRandomEvent(${eventsDatabase.indexOf(pendingEvent)}, 1)"><strong>${pendingEvent.opt1.label}</strong></button>
+                    <button class="decision-btn" onclick="resolveRandomEvent(${eventsDatabase.indexOf(pendingEvent)}, 2)"><strong>${pendingEvent.opt2.label}</strong></button>
+                </div>
+                <div id="event-result-msg" style="display:none; font-weight:bold; font-size:0.85rem; margin-top:10px; color:var(--zprp-red);"></div>
+            </div>`;
+
+        postContainer.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-box"><div class="label">Mecze</div><div class="val">${m}</div></div>
+                <div class="stat-box"><div class="label">Bramki</div><div class="val">${g}</div></div>
+                <div class="stat-box"><div class="label">Asysty</div><div class="val">${a}</div></div>
+                <div class="stat-box"><div class="label">Minuty</div><div class="val">${min}</div></div>
+            </div>
+
+            <div style="background:var(--zprp-gray); border:1px solid var(--zprp-border); padding:15px; margin-bottom:15px; border-radius:4px;">
+                <div style="font-family:'Oswald'; text-transform:uppercase;">Rozwój Overallu (OVR)</div>
+                <div style="font-size:1.4rem; font-family:'Oswald'; color:var(--zprp-red); margin:5px 0;">${oldOvr} → ${newOvr}</div>
+                <div style="font-size:0.85rem; color:#005a9c; font-weight:bold; margin-bottom:5px;">${trainingMsg}</div>
+            </div>
+
+            ${awardsHtml}
+            ${cupHtml}
+            ${clHtml}
+            ${repHtml}
+
+            <div id="decision-container-slot">${decisionHtml}</div>
+
+            <div id="league-table-slot" style="display:none;">
+                <div class="section-title" style="margin-top:25px;">Końcowa Tabela Ligi</div>
+                ${tableHtml}
+                <button class="btn-start-zprp" style="margin-top:20px;" onclick="openTransferMarket()">Przejdź do Rynku Transferowego</button>
+            </div>
+        `;
+    }
+
+    function resolveRandomEvent(eventIdx, choice) {
+        let ev = eventsDatabase[eventIdx];
+        let outcomeMsg = choice === 1 ? ev.opt1.action() : ev.opt2.action();
+        
+        document.getElementById('event-buttons-container').style.display = 'none';
+        let resDiv = document.getElementById('event-result-msg');
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = `Decyzja podjęta: <span style="color:#333; font-weight:normal;">${outcomeMsg}</span>`;
+        
+        document.getElementById('league-table-slot').style.display = 'block';
+        updateSidebar();
+    }
+
+    function calculateRealisticSalary(targetLeagueName, ovr) {
+        let base = 500; let mult = 10;
+        if (targetLeagueName.includes("II Liga")) { base = 500; mult = 30; }
+        else if (targetLeagueName.includes("I Liga")) { base = 1500; mult = 80; }
+        else if (targetLeagueName.includes("Centralna")) { base = 4000; mult = 150; }
+        else if (targetLeagueName.includes("Superliga")) { base = 10000; mult = 300; }
+        else {
+            let fData = foreignLeaguesData[targetLeagueName];
+            if (fData) {
+                if(fData.ihfTier === 1) { base = 30000; mult = 600; }
+                else if(fData.ihfTier === 2) { base = 18000; mult = 400; }
+                else if(fData.ihfTier === 3) { base = 8000; mult = 200; }
+                else { base = 5000; mult = 100; }
+            }
+        }
+        let extra = Math.max(0, (ovr - 55) * mult);
+        return Math.floor(base + extra);
+    }
+
+    function openTransferMarket() {
+        document.getElementById('subscreen-preseason').style.display = 'none';
+        
+        document.getElementById('subscreen-postseason').style.display = 'none';
+        document.getElementById('panel-main-title').innerText = "Rynek Transferowy i Awansy";
+        document.getElementById('panel-season-title').innerText = "OKNO LETNIE • WIEK: " + player.age;
+
+        let marketContainer = document.getElementById('subscreen-postseason');
+        marketContainer.style.display = 'block';
+        marketContainer.innerHTML = "";
+
+        if (player.age >= 35) {
+            marketContainer.innerHTML += `
+                <div style="background:#000; color:#fff; border:1px solid #333; padding:15px; border-radius:4px; margin-bottom:20px; text-align:center;">
+                    <strong style="font-size:1.2rem; color:var(--zprp-red);">CZAS NA EMERYTURĘ?</strong>
+                    <p style="font-size:0.9rem; margin-top:5px;">Masz 35+ lat. Ciało odmawia posłuszeństwa. Możesz zakończyć karierę zawodową.</p>
+                    <button class="btn-start-zprp" style="width:auto; padding:10px 30px; background:#fff; color:#000;" onclick="showCareerSummary()">ZAKOŃCZ KARIERĘ</button>
+                </div>`;
+        }
+
+        let isForeign = !!foreignLeaguesData[player.league];
+        currentResolvedLeague = player.league;
+        
+        if (isForeign) {
+            let countryTagMatch = player.league.match(/\(([^)]+)\)/);
+            let countryTag = countryTagMatch ? countryTagMatch[1] : "";
+            let currentTier = foreignLeaguesData[player.league].ihfTier;
+
+            if (player.isChampion) {
+                let higherLeague = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === currentTier - 1);
+                if (higherLeague) currentResolvedLeague = higherLeague;
+            } else if (player.isRelegated) {
+                let lowerLeague = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === currentTier + 1);
+                if (lowerLeague) currentResolvedLeague = lowerLeague;
+                else player.isRelegated = false; // Brak niższej ligi
+            }
+        } else {
+            if (player.isChampion) {
+                if (player.league.includes("II Liga")) {
+                    if (["pomorskie", "kujawsko-pomorskie", "warmińsko-mazurskie", "zachodniopomorskie"].includes(player.voivodeship)) currentResolvedLeague = "I Liga Mężczyzn - Gr. A";
+                    else if (["dolnośląskie", "opolskie", "wielkopolskie", "lubuskie"].includes(player.voivodeship)) currentResolvedLeague = "I Liga Mężczyzn - Gr. B";
+                    else if (["mazowieckie", "lubelskie", "podlaskie", "łódzkie"].includes(player.voivodeship)) currentResolvedLeague = "I Liga Mężczyzn - Gr. C";
+                    else currentResolvedLeague = "I Liga Mężczyzn - Gr. D";
+                } 
+                else if (player.league.includes("I Liga")) currentResolvedLeague = "Liga Centralna";
+                else if (player.league.includes("Centralna")) currentResolvedLeague = "Orlen Superliga";
+            } else if (player.isRelegated) {
+                if (player.league.includes("Superliga")) currentResolvedLeague = "Liga Centralna";
+                else if (player.league.includes("Centralna")) currentResolvedLeague = "I Liga Mężczyzn - Gr. B";
+                else if (player.league.includes("I Liga")) currentResolvedLeague = "II Liga Mężczyzn - Gr. 4";
+            }
+        }
+
+        if (player.isChampion && currentResolvedLeague !== player.league) {
+            marketContainer.innerHTML += `<div style="background:#fff3cd; color:#856404; padding:10px; margin-bottom:15px; text-align:center; font-weight:bold;">AWANS! Drużyna zagra w: ${currentResolvedLeague}!</div>`;
+        } else if (player.isRelegated && currentResolvedLeague !== player.league) {
+            marketContainer.innerHTML += `<div style="background:#f8d7da; color:#721c24; padding:10px; margin-bottom:15px; text-align:center; font-weight:bold;">SPADEK! Spadacie do: ${currentResolvedLeague}!</div>`;
+        }
+
+        let staySalary = calculateRealisticSalary(currentResolvedLeague, player.ovr);
+        marketContainer.innerHTML += `
+            <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; margin-bottom:12px;">
+                <strong style="font-size:1.05rem;">ZOSTAJĘ — ${player.club}</strong>
+                <div style="font-size:0.8rem; color:#666;">Liga: ${currentResolvedLeague} ${player.qualifiedForCL ? '(LIGA MISTRZÓW)' : ''}</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;">Kontrakt: <strong>${staySalary.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem;" onclick="acceptTransfer('${player.club}', '${currentResolvedLeague}', ${staySalary})">Przedłuż Kontrakt</button>
+            </div>
+        `;
+
+        if (isForeign) {
+            let plLeague = "Orlen Superliga";
+            if (player.ovr < 65) plLeague = "II Liga Mężczyzn - Gr. 4";
+            else if (player.ovr < 75) plLeague = "I Liga Mężczyzn - Gr. B";
+            else if (player.ovr < 80) plLeague = "Liga Centralna";
+            
+            let plTeams = polishLeaguesData[plLeague] || [];
+            if (plTeams.length > 0) {
+                let plOffer = plTeams[Math.floor(Math.random() * plTeams.length)];
+                let plSal = calculateRealisticSalary(plLeague, player.ovr);
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${plOffer.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Powrót do ojczyzny (${plLeague})</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${plSal.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:var(--zprp-red);" onclick="acceptTransfer('${plOffer.name}', '${plLeague}', ${plSal})">Wróć do Polski</button>
+                </div>`;
+            }
+        }
+
+        if (player.isRelegated && currentResolvedLeague !== player.league) {
+            let sameLowerTeams = isForeign ? (foreignLeaguesData[currentResolvedLeague].clubs || []) : (polishLeaguesData[currentResolvedLeague] || []);
+            let sameLowerOffer = sameLowerTeams.find(t => t.name !== player.club) || {name: "Inny Klub"};
+            let sameLowerSal = calculateRealisticSalary(currentResolvedLeague, player.ovr);
+            marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #555; padding:15px; margin-bottom:12px;">
+                <strong style="font-size:1.05rem;">${sameLowerOffer.name}</strong>
+                <div style="font-size:0.8rem; color:#666;">Inny klub w nowej, niższej lidze (${currentResolvedLeague})</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${sameLowerSal.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#555;" onclick="acceptTransfer('${sameLowerOffer.name}', '${currentResolvedLeague}', ${sameLowerSal})">Zmień Klub</button>
+            </div>`;
+        }
+
+        if (!isForeign && !player.isRelegated && !player.league.includes("Superliga")) {
+            let nextPL = player.league.includes("I Liga") ? "Liga Centralna" : (player.league.includes("Centralna") ? "Orlen Superliga" : "I Liga Mężczyzn - Gr. B");
+            let plTeams = polishLeaguesData[nextPL] || [];
+            let offerPL = plTeams[Math.floor(Math.random() * plTeams.length)];
+            let offerPLSalary = calculateRealisticSalary(nextPL, player.ovr);
+            marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #333; padding:15px; margin-bottom:12px;">
+                <strong style="font-size:1.05rem;">${offerPL.name}</strong>
+                <div style="font-size:0.8rem; color:#666;">Transfer wyżej (${nextPL})</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${offerPLSalary.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#333;" onclick="acceptTransfer('${offerPL.name}', '${nextPL}', ${offerPLSalary})">Zmień Klub (Polska)</button>
+            </div>`;
+        } else if (isForeign && !player.isRelegated && foreignLeaguesData[player.league].ihfTier > 1) {
+            let countryTagMatch = player.league.match(/\(([^)]+)\)/);
+            let countryTag = countryTagMatch ? countryTagMatch[1] : "";
+            let nextFL = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === foreignLeaguesData[player.league].ihfTier - 1);
+            if (nextFL) {
+                let flTeams = foreignLeaguesData[nextFL].clubs || [];
+                let offerFL = flTeams[Math.floor(Math.random() * flTeams.length)];
+                let offerFLSalary = calculateRealisticSalary(nextFL, player.ovr);
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #333; padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${offerFL.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Transfer wyżej w tym samym kraju (${nextFL})</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${offerFLSalary.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#333;" onclick="acceptTransfer('${offerFL.name}', '${nextFL}', ${offerFLSalary})">Zmień Klub Wyżej</button>
+                </div>`;
+            }
+        }
+
+        if (!isForeign && !player.isRelegated && player.league.includes("Superliga") && player.ovr >= 78) {
+            let topTeams = polishLeaguesData["Orlen Superliga"].filter(t => t.strength >= 90 && t.name !== player.club);
+            if (topTeams.length > 0) {
+                let topOffer = topTeams[Math.floor(Math.random() * topTeams.length)];
+                let topSal = calculateRealisticSalary("Orlen Superliga", player.ovr) + 8000;
+                marketContainer.innerHTML += `<div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid #1b1b1b; padding:15px; margin-bottom:12px;">
+                    <strong style="font-size:1.05rem;">${topOffer.name}</strong>
+                    <div style="font-size:0.8rem; color:#666;">Krajowy Gigant (Orlen Superliga)</div>
+                    <div style="font-size:0.85rem; margin-bottom:8px;">Oferta: <strong>${topSal.toLocaleString()} zł / mies.</strong></div>
+                    <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#1b1b1b;" onclick="acceptTransfer('${topOffer.name}', 'Orlen Superliga', ${topSal})">Przejdź do potęgi</button>
+                </div>`;
+            }
+        }
+
+        let eligibleForeign = Object.entries(foreignLeaguesData).filter(([lname, data]) => {
+            let minOvrNeeded = Math.min(...data.clubs.map(c => c.strength)) - 8;
+            return player.ovr >= minOvrNeeded;
+        }).sort(() => 0.5 - Math.random()); 
+
+        let foreignCount = 0;
+        eligibleForeign.forEach(([lName, data]) => {
+            if (foreignCount >= 2) return;
+            let validClubs = data.clubs.filter(c => c.name !== player.club);
+            if (validClubs.length === 0) return;
+
+            let club = validClubs.reduce((best, c) => Math.abs(c.strength - player.ovr) < Math.abs(best.strength - player.ovr) ? c : best, validClubs[0]);
+            let foreignSal = calculateRealisticSalary(lName, player.ovr);
+            let clBadge = club.cl ? '🇪🇺 LM' : '';
+
+            marketContainer.innerHTML += `<div style="background:#fffdf0; border:1px solid #e0d060; border-left:4px solid #d4af37; padding:15px; margin-bottom:12px;">
+                <strong style="font-size:1.05rem; color:#856404;">🌍 ${club.name} ${clBadge}</strong>
+                <div style="font-size:0.8rem; color:#666;">${lName} (IHF Tier ${data.ihfTier})</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;">Kontrakt: <strong style="color:#d4af37;">${foreignSal.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:8px; font-size:0.9rem; background:#d4af37; color:#1b1b1b;" onclick="acceptTransfer('${club.name}', '${lName}', ${foreignSal})">Transfer Zagraniczny</button>
+            </div>`;
+            foreignCount++;
+        });
+    }
+
+    function acceptTransfer(newClub, newLeague, newSalary) {
+        if (newClub !== player.club) {
+            let fInfo = foreignLeaguesData[newLeague];
+            if (fInfo) {
+                let cInfo = fInfo.clubs.find(c => c.name === newClub);
+                player.teamOVR = cInfo ? cInfo.strength : fInfo.strength;
+                player.qualifiedForCL = cInfo ? !!cInfo.cl : false; 
+            } else {
+                let dInfo = polishLeaguesData[newLeague];
+                let cInfo = dInfo ? dInfo.find(c => c.name === newClub) : null;
+                player.teamOVR = cInfo ? cInfo.strength : player.teamOVR;
+                player.qualifiedForCL = cInfo ? !!cInfo.cl : false;
+            }
+        }
+
+        player.club = newClub;
+        player.league = newLeague;
+        player.salaryNum = newSalary;
+        player.loyalty = (newClub === player.club) ? player.loyalty + 5 : 0;
+
+        updateSidebar();
+        document.getElementById('subscreen-postseason').style.display = 'none';
+        document.getElementById('subscreen-preseason').style.display = 'block';
+        document.getElementById('panel-main-title').innerText = "Przygotowania do Nowego Sezonu";
+        document.getElementById('panel-season-title').innerText = "SEZON KOLEJNY • " + player.club;
+        document.getElementById('stat-matches').innerText = "0";
+        document.getElementById('stat-goals').innerText = "0";
+        document.getElementById('stat-assists').innerText = "0";
+        document.getElementById('stat-minutes').innerText = "0";
+    }
+
+    function showCareerSummary() {
+        document.getElementById('game-layout').style.display = 'none';
+        let sumScreen = document.getElementById('screen-summary');
+        sumScreen.style.display = 'block';
+        
+        document.getElementById('retirement-stats').innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-box"><div class="label">Mecze Ogółem</div><div class="val">${player.careerStats.matches}</div></div>
+                <div class="stat-box"><div class="label">Bramki Ogółem</div><div class="val">${player.careerStats.goals}</div></div>
+                <div class="stat-box"><div class="label">Mecze w Kadrze</div><div class="val">${player.national.caps}</div></div>
+                <div class="stat-box"><div class="label">Zarobki Życia</div><div class="val" style="font-size:0.9rem;">${player.totalEarned.toLocaleString()} zł</div></div>
+            </div>
+            <div style="text-align:center; margin-top:15px; font-weight:bold; font-size:1.2rem;">Kluczowy sukces: <span style="color:var(--zprp-red);">${player.bestAchievement}</span></div>
+        `;
+        document.getElementById('retirement-history').innerHTML = historyLog.join('<hr style="border:0; border-top:1px dotted #ccc; margin:8px 0;">');
+    }
+
+    function toggleHistory() {
+        let box = document.getElementById('history-log-box');
+        let btn = document.getElementById('history-toggle-btn');
+        if(box.style.display === 'none') {
+            box.style.display = 'block';
+            box.innerHTML = historyLog.join('<hr style="border:0; border-top:1px dotted #ccc; margin:8px 0;">');
+            btn.innerText = "ZWIŃ";
+        } else {
+            box.style.display = 'none';
+            btn.innerText = "ROZWIŃ";
+        }
+    }
+</script>
+</body>
+</html>
