@@ -504,18 +504,17 @@
     let seasonStats = { goals: 0, assists: 0, finalPos: 0, awards: [] };
     let currentSeasonTable = [];
     let historyLog = [];
-    let usedEventIds = []; // rotacja wydarzeń losowych - unika szybkich powtórek
+    let usedEventIds = []; 
     let cupLog = [];
     let nationalTeamLog = [];
     let currentResolvedLeague = ""; 
 
     const eventsDatabase = [
-        // 1. ZPRP & Szatnia
         {
             id: "zprp1", title: "Wielka Restrukturyzacja ZPRP",
             desc: "Związek z dnia na dzień zmienia format ligi. Twoja drużyna musi spaść, by zrobić miejsce dla klubu znajomego prezesa.",
-            opt1: { label: "Wynajmuję prawnika i walczę!", action: () => { player.isRelegated = true; player.totalEarned = Math.max(0, player.totalEarned - 10000); return "Przegrałeś sprawę. Spadasz do niższej ligi i tracisz 10,000 zł na prawników."; } },
-            opt2: { label: "Akceptuję z pokorą.", action: () => { player.isRelegated = true; player.prof += 10; return "Spadasz do niższej ligi, ale Związek wysyła Ci dyplom Fair Play. Prof +10."; } }
+            opt1: { label: "Wynajmuję prawnika i walczę!", action: () => { player.isRelegated = true; player.isChampion = false; player.isPlayoffSpot = false; player.totalEarned = Math.max(0, player.totalEarned - 10000); return "Przegrałeś sprawę. Spadasz do niższej ligi i tracisz 10,000 zł na prawników."; } },
+            opt2: { label: "Akceptuję z pokorą.", action: () => { player.isRelegated = true; player.isChampion = false; player.isPlayoffSpot = false; player.prof += 10; return "Spadasz do niższej ligi, ale Związek wysyła Ci dyplom Fair Play. Prof +10."; } }
         },
         {
             id: "zprp2", title: "Kary za szczerość",
@@ -535,7 +534,6 @@
             opt1: { label: "Zasuwam jak wół", action: () => { player.ovr = Math.min(99, player.ovr + 1); player.injuryRisk += 30; return "Wielki przyrost siły (OVR +1), ale kolana krzyczą o pomoc (Ryzyko urazu +30%)."; } },
             opt2: { label: "Udaję ból pleców", action: () => { player.injuryRisk = Math.max(0, player.injuryRisk - 5); player.prof -= 10; return "Omijasz bieganie, ale trener notuje Twój brak ambicji. Prof -10."; } }
         },
-        // 2. Życiowe i Drastyczne
         {
             id: "piecioraczki", title: "Niespodziewane Pięcioraczki",
             desc: "Żona rodzi pięcioraczki. Z obecnej pensji nie wyżywisz takiej armii. Musisz iść na budowę na majstra.",
@@ -554,7 +552,6 @@
             opt1: { label: "Pakuję oszczędności!", action: () => { player.totalEarned = Math.floor(player.totalEarned * 0.5); player.form -= 10; return "Zainwestowałeś na górce. Tracisz połowę oszczędności życia. Forma -10 z depresji."; } },
             opt2: { label: "Inwestuję w lokatę", action: () => { player.totalEarned += 2000; return "Nuda, ale finanse rosną stabilnie. Zyskujesz 2000 zł z odsetek."; } }
         },
-        // 3. Realia wyjazdów i patologie
         {
             id: "kebab", title: "Kebab 'U Ahmeda' w autokarze",
             desc: "Tradycyjny postój po wyjeździe. Zjadasz ostrego z baraniną, a rano ważny trening.",
@@ -585,7 +582,6 @@
             opt1: { label: "Próbuję rzucać technicznie", action: () => { player.stats.gra1v1 += 2; return "Wymuszona kreatywność procentuje! Technika rośnie o +2 punkty."; } },
             opt2: { label: "Walę na siłę w trybuny", action: () => { player.stats.rzut += 1; player.media += 5; return "Trafiasz kibica z piwem. Nagranie jest hitem w sieci! Medialność +5, Siła rzutu +1."; } }
         },
-        // 4. Zdrowie
         {
             id: "znachor", title: "Wizyta u Znachora Władka",
             desc: "Boli łękotka. Wujek poleca znachora, co 'nastawia kości młotkiem'.",
@@ -602,7 +598,6 @@
             opt1: { label: "Gram z płonącymi rękami!", action: () => { player.form -= 15; player.stats.rzut += 2; return "Ogień znieczula strach! Forma -15, ale siła rzutu rośnie o +2 punkty."; } },
             opt2: { label: "Błagam o wodę z lodem", action: () => { player.form -= 10; return "Omijasz pierwszą połowę. Skóra ocalona, ale trener jest wściekły. Forma -10."; } }
         },
-        // 5. Medialność i Patologie
         {
             id: "gacie", title: "Sponsor: Producent bielizny",
             desc: "Lokalna szwalnia zapłaci 15,000 zł, jeśli wystąpisz na bilbordzie w samych slipach.",
@@ -639,7 +634,6 @@
             opt1: { label: "Zgłaszam to trenerowi!", action: () => { player.prof += 30; return "Uczciwość to podstawa. Profesjonalizm rośnie o potężne +30 punktów."; } },
             opt2: { label: "Udaję, że mam kontuzję", action: () => { player.injuryRisk = Math.max(0, player.injuryRisk - 10); player.prof -= 10; return "Tchórzostwo. Wymyślasz ból łydki żeby nie grać. Ryzyko urazu spada, ale morale (Prof) też."; } }
         },
-        // 6. Szatniowe przepychanki
         {
             id: "buty", title: "Ukradli Ci buty (Siódemki)",
             desc: "Przed finałem zniknęły Twoje douszne buty. Koledzy się śmieją.",
@@ -1004,7 +998,6 @@
         player.hand = handSelect ? handSelect.value : "prawa";
         player.difficulty = diffSelect ? diffSelect.value : "hard";
 
-        // Punkt startowy to teraz PRZEDZIAŁ (np. "45-49") - losujemy konkretny OVR w jego obrębie
         let tierRaw = tierSelect ? tierSelect.value : "45-49";
         let [tierLo, tierHi] = tierRaw.split("-").map(Number);
         player.ovr = tierLo + Math.floor(Math.random() * (tierHi - tierLo + 1));
@@ -1023,10 +1016,9 @@
         let higherTeamObj = group1List[Math.floor(Math.random() * group1List.length)] || {name: "Klub I Ligi", strength: 58};
         let centralTeamObj = centralList[Math.floor(Math.random() * centralList.length)] || {name: "Klub Centralny", strength: 68};
 
-        // Pensje startowe z losowym wahnięciem, żeby oferty różniły się między nowymi karierami
-        let localSalary = Math.round((1500 * (0.85 + Math.random() * 0.3)) / 50) * 50;
-        let higherSalary = Math.round((3500 * (0.85 + Math.random() * 0.3)) / 50) * 50;
-        let centralSalary = Math.round((6000 * (0.85 + Math.random() * 0.3)) / 50) * 50;
+        let localSalary = calculateRealisticSalary(assignedGroup, player.ovr);
+        let higherSalary = calculateRealisticSalary(iLigaGroup, player.ovr);
+        let centralSalary = calculateRealisticSalary("Liga Centralna", player.ovr);
 
         offersContainer.innerHTML = `
             <div class="brand-header">
@@ -1214,8 +1206,6 @@
         let baseTeamOVR = player.teamOVR || leagueBaseOVR;
         let ovrDiff = player.ovr - baseTeamOVR;
         
-        // Pozycja na parkiecie: bramkarz i rozgrywający mają największy wpływ na wynik zespołu.
-        // Usunięto sztuczne dławienie w wyższych ligach — nawet w Superlidze gwiazdor z OVR 99 realnie ciągnie drużynę.
         let posMultiplier = (player.position === "GK") ? 1.6 : (player.position === "CTR" ? 1.4 : 0.9);
         let carryMultiplier = 0.55;
 
@@ -1347,7 +1337,6 @@
         } else {
             Object.values(polishLeaguesData).forEach(leagueArr => pool.push(...leagueArr));
         }
-        // Zabezpieczenie: nigdy nie losujemy własnego klubu jako przeciwnika
         pool = pool.filter(t => t.name !== player.club);
 
         let teamStrength = (player.teamOVR || 45) + Math.floor((player.ovr - (player.teamOVR || 45)) * 0.6);
@@ -1445,7 +1434,6 @@
         player.national.role = roleTier;
 
         let windowMatches = (roleTier === "Kadra A (Seniorzy)") ? (2 + Math.floor(Math.random() * 3)) : 2;
-        // Bramki w oknie kadrowym skalowane realnie do OVR zawodnika (spójne dla U19/U21/A)
         let goalsPerMatch = Math.max(0, Math.floor(player.ovr * 0.07) + Math.floor(Math.random() * 3) - 1);
         let windowGoals = goalsPerMatch * windowMatches;
         
@@ -1461,7 +1449,6 @@
             }
         }
 
-        // Mecze eliminacyjne liczą się do statystyk od razu; ewentualny wielki turniej doliczy swoje osobno w resolveTournament()
         player.national.caps += windowMatches;
         player.national.goals += windowGoals;
 
@@ -1618,15 +1605,13 @@
             </div>`;
         }
 
-        // Filtrowanie wydarzeń (np. Pięcioraczki tylko jeśli wiek > 30 i ovr < 65)
         let availableEvents = eventsDatabase.filter(e => {
             if (e.id === "piecioraczki") return (player.age >= 30 && player.ovr < 65);
             return true;
         });
-        // System rotacji: nie powtarzamy wydarzenia, dopóki nie „wyczerpiemy" puli dostępnych na ten moment kariery
         let notYetSeen = availableEvents.filter(e => !usedEventIds.includes(e.id));
         if (notYetSeen.length === 0) {
-            usedEventIds = []; // wszystkie obejrzane - zaczynamy nową rundę rotacji
+            usedEventIds = []; 
             notYetSeen = availableEvents;
         }
         let pendingEvent = notYetSeen[Math.floor(Math.random() * notYetSeen.length)];
@@ -1683,7 +1668,6 @@
         resDiv.style.display = 'block';
         resDiv.innerHTML = `Decyzja podjęta: <span style="color:#333; font-weight:normal;">${outcomeMsg}</span>`;
         
-        // Zabezpieczenie końca kariery (Pięcioraczki itp.)
         if (player.forceRetire) {
             document.getElementById('league-table-slot').innerHTML = `
                 <div style="background:#000; color:#fff; padding:20px; text-align:center; margin-top:20px; border-radius:4px;">
@@ -1702,33 +1686,31 @@
     }
 
     function calculateRealisticSalary(targetLeagueName, ovr) {
-        let base = 500; let mult = 10;
-        if (targetLeagueName.includes("II Liga")) { base = 500; mult = 30; }
-        else if (targetLeagueName.includes("I Liga")) { base = 1500; mult = 80; }
-        else if (targetLeagueName.includes("Centralna")) { base = 4000; mult = 150; }
-        else if (targetLeagueName.includes("Superliga")) { base = 10000; mult = 300; }
+        let base = 800; let mult = 10;
+        if (targetLeagueName.includes("II Liga")) { base = 1000; mult = 30; }
+        else if (targetLeagueName.includes("I Liga")) { base = 2500; mult = 80; }
+        else if (targetLeagueName.includes("Centralna")) { base = 5000; mult = 150; }
+        else if (targetLeagueName.includes("Superliga")) { base = 12000; mult = 300; }
         else {
             let fData = foreignLeaguesData[targetLeagueName];
             if (fData) {
-                if(fData.ihfTier === 1) { base = 30000; mult = 600; }
-                else if(fData.ihfTier === 2) { base = 18000; mult = 400; }
-                else if(fData.ihfTier === 3) { base = 8000; mult = 200; }
-                else { base = 5000; mult = 100; }
+                if(fData.ihfTier === 1) { base = 35000; mult = 600; }
+                else if(fData.ihfTier === 2) { base = 20000; mult = 400; }
+                else if(fData.ihfTier === 3) { base = 10000; mult = 200; }
+                else { base = 6000; mult = 100; }
             }
         }
-        let extra = Math.max(0, (ovr - 55) * mult);
+        let extra = Math.max(0, (ovr - 45) * mult);
         let raw = base + extra;
-        // Losowe wahnięcie +/- 12%, żeby oferty nie były identyczne sezon po sezonie
         let jitter = 0.88 + Math.random() * 0.24;
         return Math.round((raw * jitter) / 50) * 50;
     }
 
-    // Region -> właściwa grupa I Ligi (spójne z awansem z II ligi w openTransferMarket)
     function getILeagueGroup(voiv) {
         if (["pomorskie", "kujawsko-pomorskie", "warmińsko-mazurskie", "zachodniopomorskie"].includes(voiv)) return "I Liga Mężczyzn - Gr. A";
         if (["dolnośląskie", "opolskie", "wielkopolskie", "lubuskie"].includes(voiv)) return "I Liga Mężczyzn - Gr. B";
         if (["mazowieckie", "lubelskie", "podlaskie", "łódzkie"].includes(voiv)) return "I Liga Mężczyzn - Gr. C";
-        return "I Liga Mężczyzn - Gr. D"; // śląskie, małopolskie, świętokrzyskie, podkarpackie
+        return "I Liga Mężczyzn - Gr. D"; 
     }
 
     function openTransferMarket() {
@@ -1909,6 +1891,18 @@
                 let cInfo = dInfo ? dInfo.find(c => c.name === newClub) : null;
                 player.teamOVR = cInfo ? cInfo.strength : player.teamOVR;
                 player.qualifiedForCL = cInfo ? !!cInfo.cl : false;
+            }
+        } else {
+            // Zabezpieczenie przed zamrożeniem OVR klubu po awansie/spadku
+            if (newLeague !== player.league) {
+                 let targetBase = 42;
+                 if (newLeague.includes("I Liga")) targetBase = 56;
+                 if (newLeague.includes("Centralna")) targetBase = 68;
+                 if (newLeague.includes("Superliga")) targetBase = 80;
+                 if (foreignLeaguesData[newLeague]) targetBase = foreignLeaguesData[newLeague].strength;
+
+                 player.teamOVR = Math.floor((player.teamOVR + targetBase) / 2);
+                 if (player.teamOVR < targetBase - 4) player.teamOVR = targetBase - 4;
             }
         }
 
