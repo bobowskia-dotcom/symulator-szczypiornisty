@@ -252,7 +252,6 @@
 </head>
 <body>
 
-    <!-- KROK 1: KREATOR POSTACI -->
     <div id="screen-creator">
         <div class="brand-header">
             <div style="font-size: 2rem; color: var(--zprp-red); margin-bottom: 5px;">🤾‍♂️</div>
@@ -293,10 +292,13 @@
         <div class="form-group">
             <label>Punkt Startowy (Overall):</label>
             <select id="char-start-tier">
-                <option value="40">Podwórkowy gracz (OVR 40)</option>
-                <option value="48" selected>Amator z okręgówki (OVR 48)</option>
-                <option value="55">Szkoła Mistrzostwa Sportowego (OVR 55)</option>
-                <option value="62">Super-talent (OVR 62)</option>
+                <option value="30-34">Tata kazał się ruszać (OVR 30-34)</option>
+                <option value="35-39">Syn właściciela wepchnięty do składu (OVR 35-39)</option>
+                <option value="40-44">Coś tam gra (OVR 40-44)</option>
+                <option value="45-49" selected>SMSiak (OVR 45-49)</option>
+                <option value="50-54">Na 1 Ligę wystarczy (OVR 50-54)</option>
+                <option value="55-59">Pan Profesor (OVR 55-59)</option>
+                <option value="60-64">Orzeł Wenty (OVR 60-64)</option>
             </select>
         </div>
 
@@ -329,10 +331,8 @@
         <button class="btn-start-zprp" onclick="goToOffers()">Rozpocznij Karierę</button>
     </div>
 
-    <!-- KROK 2: WYBÓR OFERT -->
     <div id="screen-offers" style="display:none;"></div>
 
-    <!-- EKRAN DECYZYJNY - WIELKI TURNIEJ REPREZENTACJI (MŚ/EURO) -->
     <div id="screen-tournament-decision" style="display: none;">
         <div class="brand-header">
             <div style="font-size: 2rem; margin-bottom: 5px;">🇵🇱</div>
@@ -343,19 +343,18 @@
         
         <button class="decision-btn" style="border-left: 4px solid var(--zprp-red);" onclick="resolveTournament('gladiator')">
             <strong>Tryb Gladiator (Zostawiam serce na parkiecie)</strong><br>
-            <span style="font-size:0.75rem; color:#666;">Ogromne szanse na bramki i nagrody MVP, ale OGROMNE ryzyko ciężkiej kontuzji po turnieju.</span>
+            <span style="font-size:0.75rem; color:#666;">Ogromne szanse na medale i nagrody, ale bardzo wysokie ryzyko zmęczenia i ciężkiej kontuzji po turnieju.</span>
         </button>
         <button class="decision-btn" style="border-left: 4px solid #005a9c;" onclick="resolveTournament('normal')">
             <strong>Solidna gra (Zbalansowane zaangażowanie)</strong><br>
-            <span style="font-size:0.75rem; color:#666;">Grasz na miarę możliwości. Standardowe szanse na wynik i standardowe zmęczenie.</span>
+            <span style="font-size:0.75rem; color:#666;">Grasz na miarę możliwości. Standardowe szanse na wynik i normalne zmęczenie.</span>
         </button>
         <button class="decision-btn" style="border-left: 4px solid #555;" onclick="resolveTournament('rest')">
             <strong>Oszczędzam się (Priorytetem jest klub)</strong><br>
-            <span style="font-size:0.75rem; color:#666;">Unikasz urazów, odpoczywasz na ligę, ale szanse kadry drastycznie spadają. Kibice będą wściekli.</span>
+            <span style="font-size:0.75rem; color:#666;">Odpoczywasz, unikasz urazów, ale szanse kadry maleją. Kibice nie będą zadowoleni.</span>
         </button>
     </div>
 
-    <!-- KROK 3: GŁÓWNY PANEL KARIERY (KARTA BOCZNA + SEZON) -->
     <div id="game-layout">
         <!-- LEWA STRONA: KARTA ZAWODNIKA -->
         <div class="player-sidebar">
@@ -463,7 +462,6 @@
         </div>
     </div>
 
-    <!-- EKRAN EMERYTURY / ZAKOŃCZENIA KARIERY -->
     <div id="screen-summary" style="display: none;">
         <div class="brand-header">
             <div style="font-size: 3rem; margin-bottom: 5px;">👟</div>
@@ -494,7 +492,7 @@
         name: "", age: 16, currentYear: 2026, voivodeship: "śląskie", position: "CTR", hand: "prawa", ovr: 48, difficulty: "hard",
         salaryNum: 1500, totalEarned: 0, club: "Brak", league: "II Liga Mężczyzn - Gr. 4", teamOVR: 42,
         prof: 60, media: 15, injuryRisk: 10, historyPoints: 0, isChampion: false, isRelegated: false,
-        isPlayoffSpot: false, loyalty: 0,
+        isPlayoffSpot: false, loyalty: 0, forceRetire: false,
         stats: { rzut: 48, gra1v1: 47, iq: 50, obrona: 46 },
         form: 55, formTrend: "stabilna",
         bestAchievement: "Brak sukcesów", bestAchievementTier: 0,
@@ -506,60 +504,216 @@
     let seasonStats = { goals: 0, assists: 0, finalPos: 0, awards: [] };
     let currentSeasonTable = [];
     let historyLog = [];
+    let usedEventIds = []; // rotacja wydarzeń losowych - unika szybkich powtórek
     let cupLog = [];
     let nationalTeamLog = [];
     let currentResolvedLeague = ""; 
 
-    // BAZA WYDARZEŃ LOSOWYCH Z 2 OPCJAMI DO WYBORU
     const eventsDatabase = [
+        // 1. ZPRP & Szatnia
         {
-            title: "Zgubiony bagaż przez linie lotnicze",
-            desc: "Lecisz na mecz bez swoich ulubionych butów. Co robisz?",
-            opt1: { label: "Gram w pożyczonych o rozmiar mniejszych", action: () => { player.injuryRisk += 15; player.media += 5; return "Doceniają Twoje poświęcenie (+5 Media), ale stopy krwawią (+15% Ryzyko urazu)."; } },
-            opt2: { label: "Odmawiam gry w tym meczu", action: () => { player.prof -= 10; player.form -= 5; return "Trener wściekły (-10 Prof), spadek formy, ale zdrowie zachowane."; } }
+            id: "zprp1", title: "Wielka Restrukturyzacja ZPRP",
+            desc: "Związek z dnia na dzień zmienia format ligi. Twoja drużyna musi spaść, by zrobić miejsce dla klubu znajomego prezesa.",
+            opt1: { label: "Wynajmuję prawnika i walczę!", action: () => { player.isRelegated = true; player.totalEarned = Math.max(0, player.totalEarned - 10000); return "Przegrałeś sprawę. Spadasz do niższej ligi i tracisz 10,000 zł na prawników."; } },
+            opt2: { label: "Akceptuję z pokorą.", action: () => { player.isRelegated = true; player.prof += 10; return "Spadasz do niższej ligi, ale Związek wysyła Ci dyplom Fair Play. Prof +10."; } }
         },
         {
-            title: "Impreza integracyjna w klubie",
-            desc: "Koledzy proponują ostre wyjście na miasto przed porannym rozbieganiem.",
-            opt1: { label: "Idę z nimi, budujemy morale!", action: () => { player.form -= 10; player.prof -= 15; player.loyalty += 5; return "Zaspałeś na trening. Spadek formy i profesjonalizmu, ale lubią Cię w szatni."; } },
-            opt2: { label: "Piję wodę i wracam o 22:00", action: () => { player.form += 5; player.prof += 5; return "Trener widzi w Tobie profesjonalistę (+5 Forma, +5 Prof)."; } }
+            id: "zprp2", title: "Kary za szczerość",
+            desc: "W wywiadzie narzekałeś na sędziów. ZPRP wlepia Ci karę finansową.",
+            opt1: { label: "Płacę i przepraszam", action: () => { player.totalEarned = Math.max(0, player.totalEarned - 5000); player.prof += 5; return "Tracisz kasę, ale ratujesz wizerunek u włodarzy. Prof +5."; } },
+            opt2: { label: "Odmawiam i robię aferę", action: () => { player.form -= 10; player.media += 20; player.injuryRisk = Math.max(0, player.injuryRisk - 10); return "Zawieszenie na dwa mecze! Forma spada, ale odpoczywasz i zdobywasz sławę na Twitterze."; } }
         },
         {
-            title: "Kontrowersyjna decyzja sędziego",
-            desc: "Sędzia dyktuje niesłusznego karnego dla rywali w kluczowym momencie.",
-            opt1: { label: "Krzyczę na sędziego (Afera)", action: () => { player.media += 15; player.prof -= 10; return "Wideo z Twoją furią to hit internetu (+15 Media), ale Związek wlepia karę (-10 Prof)."; } },
-            opt2: { label: "Odchodzę w milczeniu", action: () => { player.prof += 10; player.stats.obrona += 1; return "Chłodna głowa podnosi Profesjonalizm (+10) i skupienie w obronie (+1 OBR)."; } }
+            id: "prezes1", title: "Prezes płaci w naturze",
+            desc: "Klub ma długi. Prezes proponuje wypłatę w talonach na cement albo w klubowych dresach.",
+            opt1: { label: "Biorę dresy", action: () => { player.form += 5; return "Oszczędności brak, ale szatnia Cię kocha za lojalność. Forma +5."; } },
+            opt2: { label: "Idę do prasy", action: () => { player.form -= 15; player.totalEarned = Math.max(0, player.totalEarned - 3000); return "Klub bankrutuje, lądujesz na lodzie. Forma -15."; } }
         },
         {
-            title: "Oferta Sponsora: Napój Energetyczny",
-            desc: "Lokalna firma oferuje 20,000 zł za picie ich cukrowego napoju po meczach.",
-            opt1: { label: "Biorę to, kasa to kasa", action: () => { player.totalEarned += 20000; player.prof -= 5; return "Konto puchnie (+20,000 zł), ale dietetyk klubowy płacze (-5 Prof)."; } },
-            opt2: { label: "Promuję tylko zdrowy styl życia", action: () => { player.prof += 10; player.media += 5; return "Kibice szanują Twoje zasady (+10 Prof, +5 Media)."; } }
+            id: "kadra_beton", title: "Zgrupowanie Centralne 'Beton'",
+            desc: "Powołanie na dziwne zgrupowanie kadry B, gdzie trener każe tylko biegać po górach z oponami.",
+            opt1: { label: "Zasuwam jak wół", action: () => { player.ovr = Math.min(99, player.ovr + 1); player.injuryRisk += 30; return "Wielki przyrost siły (OVR +1), ale kolana krzyczą o pomoc (Ryzyko urazu +30%)."; } },
+            opt2: { label: "Udaję ból pleców", action: () => { player.injuryRisk = Math.max(0, player.injuryRisk - 5); player.prof -= 10; return "Omijasz bieganie, ale trener notuje Twój brak ambicji. Prof -10."; } }
+        },
+        // 2. Życiowe i Drastyczne
+        {
+            id: "piecioraczki", title: "Niespodziewane Pięcioraczki",
+            desc: "Żona rodzi pięcioraczki. Z obecnej pensji nie wyżywisz takiej armii. Musisz iść na budowę na majstra.",
+            opt1: { label: "Odkładam piłkę, biorę kielnię.", action: () => { player.forceRetire = true; return "Rodzina jest najważniejsza. Kariera sportowa brutalnie dobiega końca."; } },
+            opt2: { label: "Dorabiam na Uberze po nocach", action: () => { player.forceRetire = true; return "Zasypiasz na kluczowym meczu. Trener Cię zwalnia. To koniec kariery."; } }
         },
         {
-            title: "Podejrzenie mikrourazu barku",
-            desc: "Fizjoterapeuta zaleca 2 tygodnie przerwy, by zapobiec zerwaniu mięśnia.",
-            opt1: { label: "Zaciskam zęby i gram!", action: () => { player.injuryRisk += 25; return "Bohaterska postawa, ale igrasz z ogniem! Ryzyko ciężkiej kontuzji drastycznie wzrasta (+25%)."; } },
-            opt2: { label: "Pauzuję i robię rezonans", action: () => { player.form -= 10; player.injuryRisk = Math.max(0, player.injuryRisk - 15); return "Uraz zaleczony (Ryzyko spada), ale wypadasz z rytmu meczowego (-10 Forma)."; } }
+            id: "fame_mma", title: "Telefon od włodarza FAME MMA",
+            desc: "Dostałeś ofertę walki w oktagonie z patoinfluencerem za ogromne pieniądze.",
+            opt1: { label: "Wchodzę w to!", action: () => { player.totalEarned += 200000; player.prof = 0; player.form -= 30; return "Zarabiasz 200,000 zł, ale stajesz się pośmiewiskiem. Forma drastycznie spada, Prof na zerze."; } },
+            opt2: { label: "Szanuję sport", action: () => { player.prof += 20; player.media -= 10; return "Koledzy i trener doceniają Twoją postawę. Prof +20, ale omijają Cię flesze."; } }
+        },
+        {
+            id: "krypto", title: "Kryptowaluta 'Pewniaczek'",
+            desc: "Znajomy bramkarz mówi, że SzczypiorCoin idzie na księżyc. Namawia na wejście.",
+            opt1: { label: "Pakuję oszczędności!", action: () => { player.totalEarned = Math.floor(player.totalEarned * 0.5); player.form -= 10; return "Zainwestowałeś na górce. Tracisz połowę oszczędności życia. Forma -10 z depresji."; } },
+            opt2: { label: "Inwestuję w lokatę", action: () => { player.totalEarned += 2000; return "Nuda, ale finanse rosną stabilnie. Zyskujesz 2000 zł z odsetek."; } }
+        },
+        // 3. Realia wyjazdów i patologie
+        {
+            id: "kebab", title: "Kebab 'U Ahmeda' w autokarze",
+            desc: "Tradycyjny postój po wyjeździe. Zjadasz ostrego z baraniną, a rano ważny trening.",
+            opt1: { label: "Podwójny z ostrym sosem!", action: () => { player.injuryRisk += 15; player.form -= 5; return "Żołądek eksplodował. Ryzyko zatrucia i urazu rośnie o 15%. Forma -5."; } },
+            opt2: { label: "Ryż z kurczakiem z pudełka", action: () => { player.prof += 10; return "Koledzy z tyłu autokaru się śmieją, ale Twoje ciało dziękuje. Prof +10."; } }
+        },
+        {
+            id: "dach", title: "Kapiący dach na hali",
+            desc: "Leje deszcz, w polu bramkowym jest kałuża. Mecz przypomina jazdę figurową na lodzie.",
+            opt1: { label: "Gram na maksa, ślizgam się!", action: () => { player.injuryRisk += 20; player.media += 10; return "Rozbiłeś głowę o słupek. Uraz +20%, ale zyskujesz szacunek i brawa kibiców!"; } },
+            opt2: { label: "Chodzę na palcach", action: () => { player.form -= 10; player.injuryRisk = Math.max(0, player.injuryRisk - 10); return "Mecz przegrany przez Twoją asekurację (Forma -10), ale chociaż stawy całe."; } }
+        },
+        {
+            id: "bojler", title: "Brak ciepłej wody po meczu",
+            desc: "Znowu awaria bojlera w gościach w środku stycznia. Woda jak lód.",
+            opt1: { label: "Robię morsowanie!", action: () => { player.injuryRisk = Math.max(0, player.injuryRisk - 5); player.form += 5; return "Budujesz niezwykłą odporność organizmu. Ryzyko urazu w dół, Forma +5."; } },
+            opt2: { label: "Wracam brudny", action: () => { player.prof -= 10; player.media -= 5; return "Zapach w autokarze nie do zniesienia. Spada Twój profesjonalizm i wizerunek."; } }
+        },
+        {
+            id: "autokar", title: "Popsuty autokar na autostradzie",
+            desc: "Autokar staje o 3 w nocy. Kierowca woła: 'Panowie, pchamy!'",
+            opt1: { label: "Pcham z chłopakami!", action: () => { player.stats.obrona += 1; player.form -= 5; return "Budujecie masę. Siła w obronie rośnie (+1 OBR), ale nogi rano są jak z waty (Forma -5)."; } },
+            opt2: { label: "Śpię na tylnym fotelu", action: () => { player.prof -= 10; return "Oszczędzasz siły, ale drużyna chowa Ci buty do sprzętu. Prof -10."; } }
+        },
+        {
+            id: "brak_kleju", title: "Zakaz kleju na hali rywala",
+            desc: "Sędzia zakazuje żywicy ze względu na 'nowy parkiet'. Piłka jest śliska jak mydło.",
+            opt1: { label: "Próbuję rzucać technicznie", action: () => { player.stats.gra1v1 += 2; return "Wymuszona kreatywność procentuje! Technika rośnie o +2 punkty."; } },
+            opt2: { label: "Walę na siłę w trybuny", action: () => { player.stats.rzut += 1; player.media += 5; return "Trafiasz kibica z piwem. Nagranie jest hitem w sieci! Medialność +5, Siła rzutu +1."; } }
+        },
+        // 4. Zdrowie
+        {
+            id: "znachor", title: "Wizyta u Znachora Władka",
+            desc: "Boli łękotka. Wujek poleca znachora, co 'nastawia kości młotkiem'.",
+            opt1: { label: "Idę do Władka!", action: () => { 
+                let roll = Math.random(); 
+                if(roll > 0.5) { player.injuryRisk = 0; return "CUD! Władek naprawił kolano uciskiem w skroń. Ryzyko urazu spada do ZERA!"; } 
+                else { player.injuryRisk += 40; return "TRAGEDIA! Władek pogorszył sprawę, Ryzyko urazu rośnie o 40%!"; } 
+            } },
+            opt2: { label: "Płacę za rezonans", action: () => { player.totalEarned = Math.max(0, player.totalEarned - 1000); player.injuryRisk = Math.max(0, player.injuryRisk - 10); return "Bezpieczne rozwiązanie. Tracisz 1000 zł, ale ryzyko urazu spada."; } }
+        },
+        {
+            id: "masc", title: "Klej pomyłkowo zamieniony z maścią końską",
+            desc: "Łapiesz za słoik przed meczem, po chwili dłonie płoną żywym ogniem.",
+            opt1: { label: "Gram z płonącymi rękami!", action: () => { player.form -= 15; player.stats.rzut += 2; return "Ogień znieczula strach! Forma -15, ale siła rzutu rośnie o +2 punkty."; } },
+            opt2: { label: "Błagam o wodę z lodem", action: () => { player.form -= 10; return "Omijasz pierwszą połowę. Skóra ocalona, ale trener jest wściekły. Forma -10."; } }
+        },
+        // 5. Medialność i Patologie
+        {
+            id: "gacie", title: "Sponsor: Producent bielizny",
+            desc: "Lokalna szwalnia zapłaci 15,000 zł, jeśli wystąpisz na bilbordzie w samych slipach.",
+            opt1: { label: "Robimy to dla hajsu", action: () => { player.totalEarned += 15000; player.media += 20; player.prof -= 10; return "Kasa się zgadza. Stajesz się twarzą miasta (+20 Media), ale w szatni nie dają Ci żyć (Prof -10)."; } },
+            opt2: { label: "Odmawiam", action: () => { player.prof += 10; return "Wizerunek nieskalany. Zyskujesz +10 do Profesjonalizmu."; } }
+        },
+        {
+            id: "tiktok", title: "Tiktokowy taniec przed meczem",
+            desc: "Młodzi koledzy każą Ci nagrywać 'trend' przed derbami. Trener patrzy z politowaniem.",
+            opt1: { label: "Wyginam śmiało ciało", action: () => { player.media += 15; player.form -= 10; return "Film ma milion wyświetleń (+15 Media), ale trener sadza Cię na ławkę (Forma -10)."; } },
+            opt2: { label: "Krzyczę żeby wzięli piłki", action: () => { player.prof += 15; player.media -= 5; return "Młodzi uważają Cię za dziadersa, ale pokazujesz kto tu rządzi. Prof +15."; } }
+        },
+        {
+            id: "influ", title: "Związek z Gwiazdą Instagrama",
+            desc: "Poznajesz modelkę. Zaczynają się imprezy w Warszawie, ścianki, zero snu.",
+            opt1: { label: "Życie jest jedno!", action: () => { player.media = 90; player.prof -= 30; player.injuryRisk += 20; return "Jesteś na okładkach pudelków! Medialność leci w kosmos (90), ale organizm się sypie (Ryzyko +20%, Prof -30)."; } },
+            opt2: { label: "Jutro mam rzuty...", action: () => { player.prof += 10; return "Zrywasz po tygodniu. Wybierasz sport i profesjonalizm (+10)."; } }
+        },
+        {
+            id: "kibole", title: "Kibice 'motywują' po porażce",
+            desc: "Na trening wpadają smutni panowie z młyna z żądaniem 'ambicji'.",
+            opt1: { label: "Tłumaczę i obiecuję poprawę", action: () => { player.form -= 10; return "Koledzy stłamszeni, wkrada się strach. Forma całego zespołu (i Twoja) spada o 10."; } },
+            opt2: { label: "Pyskuję najgłośniejszemu", action: () => { player.injuryRisk += 30; player.prof += 10; return "Dostałeś z 'liścia' (Ryzyko urazu +30%), ale szatnia uważa Cię za bohatera (Prof +10)."; } }
+        },
+        {
+            id: "wywiad", title: "Pijany wywiad po meczu",
+            desc: "Wypiłeś piwo w szatni, wychodzisz i palnąłeś do TV: 'Sędzia to złodziej'.",
+            opt1: { label: "Zrzucam winę na emocje", action: () => { player.totalEarned = Math.max(0, player.totalEarned - 2000); return "Związek wlepia Ci karę 2000 zł, sprawa zamiata się pod dywan."; } },
+            opt2: { label: "Idę w zaparte na podcastach", action: () => { player.media += 30; player.prof -= 20; return "Stajesz się męczennikiem wolności słowa! Medialność +30, ale trener ma Cię dość (Prof -20)."; } }
+        },
+        {
+            id: "buk", title: "Człowiek w płaszczu z propozycją",
+            desc: "Gostek na parkingu oferuje 30 tysięcy za 'słabszy dzień' i przestrzelone karne.",
+            opt1: { label: "Zgłaszam to trenerowi!", action: () => { player.prof += 30; return "Uczciwość to podstawa. Profesjonalizm rośnie o potężne +30 punktów."; } },
+            opt2: { label: "Udaję, że mam kontuzję", action: () => { player.injuryRisk = Math.max(0, player.injuryRisk - 10); player.prof -= 10; return "Tchórzostwo. Wymyślasz ból łydki żeby nie grać. Ryzyko urazu spada, ale morale (Prof) też."; } }
+        },
+        // 6. Szatniowe przepychanki
+        {
+            id: "buty", title: "Ukradli Ci buty (Siódemki)",
+            desc: "Przed finałem zniknęły Twoje douszne buty. Koledzy się śmieją.",
+            opt1: { label: "Gram w halówkach z dyskontu", action: () => { player.injuryRisk += 20; return "Brak amortyzacji. Twoje kolana płaczą. Ryzyko urazu +20%."; } },
+            opt2: { label: "Pożyczam za duże od kołowego", action: () => { player.stats.gra1v1 = Math.max(0, player.stats.gra1v1 - 2); return "Czujesz się jak w kajakach. Zwinność i gra 1v1 spada o 2 punkty."; } }
+        },
+        {
+            id: "serb", title: "Nowy gwiazdor w zespole",
+            desc: "Klub kupił zawodnika z Bałkanów, który zarabia 3x tyle co Ty, a na treningach tylko truchta.",
+            opt1: { label: "Kosisz go w obronie na maksa", action: () => { player.stats.obrona += 2; player.form -= 5; return "Pokazujesz mu polską twardą grę! Obrona +2, ale dostajesz ochrzan od trenera (Forma -5)."; } },
+            opt2: { label: "Skupiam się na sobie", action: () => { player.stats.iq += 1; player.prof += 5; return "Omijasz dymy, budujesz boiskowe IQ (+1) i profesjonalizm (+5)."; } }
+        },
+        {
+            id: "balkany", title: "Kocioł na Bałkanach",
+            desc: "Mecz w Skopje. Kibice plują, rzucają zapalniczkami, a w szatni jest 40 stopni.",
+            opt1: { label: "Wchodzę w ten ogień!", action: () => { player.ovr = Math.min(99, player.ovr + 1); player.injuryRisk += 15; return "Mecz wyrabia z Ciebie twardziela! Zyskujesz stały +1 OVR, mimo lekkich guzów."; } },
+            opt2: { label: "Chowam się po kątach", action: () => { player.form -= 15; return "Presja zjadła Cię żywcem. Słaby mecz obniża Twoją formę o 15 punktów."; } }
+        },
+        {
+            id: "zlom", title: "Reklama Skupu Złomu 'Stalowy Rzut'",
+            desc: "Oferta z lokalnej TV: masz krzyczeć z ekranu 'Tniemy ceny jak ja tnę obronę!'.",
+            opt1: { label: "Biorę 5000 zł gotówką", action: () => { player.totalEarned += 5000; player.media -= 10; return "Wzbogaciłeś się o 5k, ale koledzy puszczają tę reklamę w szatni przez rok. Wizerunek cierpi (-10 Media)."; } },
+            opt2: { label: "Odrzucam z honorem", action: () => { player.prof += 5; return "Zachowujesz twarz i godność profesjonalnego sportowca."; } }
+        },
+        {
+            id: "tablica", title: "Latająca tablica taktyczna",
+            desc: "W przerwie meczu wkurzony trener rzuca tablicą prosto w Twoją głowę.",
+            opt1: { label: "Robię zwinny unik", action: () => { player.stats.gra1v1 += 1; return "Refleks godny ninjy! Gra 1v1 rośnie o 1 punkt."; } },
+            opt2: { label: "Łapię ją w locie i rysuję zagrywkę", action: () => { player.stats.iq += 2; player.prof -= 10; return "Wykazałeś się geniuszem taktycznym (IQ +2), ale podważyłeś autorytet trenera (Prof -10)."; } }
+        },
+        {
+            id: "pilki", title: "Kradzież piłek z magazynu",
+            desc: "Ktoś wyniósł sprzęt. Nie ma czym trenować, zostały tylko tenisowe.",
+            opt1: { label: "Ćwiczymy zwinność!", action: () => { player.stats.gra1v1 += 1; return "Trening nietypowy, ale skuteczny. Zwinność z piłeczką tenisową rośnie (+1 Gra 1v1)."; } },
+            opt2: { label: "Kupuję z własnej kieszeni", action: () => { player.totalEarned = Math.max(0, player.totalEarned - 800); player.prof += 15; return "Zarządca Roku. Tracisz 800 zł, ale w zespole zostajesz legendą (Prof +15)."; } }
+        },
+        {
+            id: "zaklad", title: "Gra w 'Jednego' po treningu",
+            desc: "Zakład o stówę – rzuty przez całe boisko w poprzeczkę.",
+            opt1: { label: "Wchodzę all-in!", action: () => { player.stats.rzut += 1; player.totalEarned = Math.max(0, player.totalEarned - 100); return "Przegrywasz stówę, ale szlifujesz technikę lobów (Rzut +1)."; } },
+            opt2: { label: "Idę pod prysznic", action: () => { player.prof += 5; return "Zdrowy rozsądek bierze górę. Profesjonalizm lekko rośnie."; } }
+        },
+        {
+            id: "trener_medyk", title: "Trener diagnozuje kostkę",
+            desc: "Skręciłeś kostkę. Trener mówi: 'Zimna woda, taśma pakowa i wracaj do gry!'",
+            opt1: { label: "Zaciskam zęby i gram!", action: () => { player.injuryRisk += 35; return "Heroizm z lat 90-tych. Grasz, ale Twoja kostka jest jak tykająca bomba (Uraz +35%)."; } },
+            opt2: { label: "Jadę na SOR", action: () => { player.form -= 10; player.prof += 5; return "Trener nazywa Cię 'mięczakiem', ale zdrowie to fundament. Forma spada, Prof rośnie."; } }
+        },
+        {
+            id: "taniec", title: "Taniec z Gwiazdami (Polsat)",
+            desc: "Produkcja widzi w Tobie potencjał celebryty. Oferują udział za potężną stawkę w trakcie rundy wiosennej.",
+            opt1: { label: "Biorę to! Wiosna poczeka.", action: () => { player.totalEarned += 100000; player.media = 99; player.ovr = Math.max(30, player.ovr - 3); return "Stajesz się Królem Parkietu i zarabiasz 100k, ale Twój OVR spada aż o 3 punkty od braku treningów!"; } },
+            opt2: { label: "Piłka ręczna ponad wszystko.", action: () => { player.prof += 20; return "Trener uronił łzę wzruszenia. Jesteś tytanem pracy. Profesjonalizm +20."; } }
+        },
+        {
+            id: "zdrapka", title: "Złota zdrapka z Orlenu",
+            desc: "W drodze z wyjazdu kupujesz zdrapkę na stacji i wygrywasz 10,000 złotych.",
+            opt1: { label: "Stawiam hot-dogi wszystkim!", action: () => { player.form += 15; player.totalEarned += 8000; return "Morale wywala poza skalę! Forma +15, a do portfela i tak wpada solidna reszta."; } },
+            opt2: { label: "Chowam do portfela", action: () => { player.totalEarned += 10000; player.prof -= 5; return "Wygrywasz 10k, ale koledzy widzieli. 'Mógł chociaż kawę postawić...' (Prof -5)."; } }
         }
     ];
 
-    // --- NOWY POWER RANKING REPREZENTACJI ---
     const nationalTeamsPowerRanking = [
-        // --- TIER 1: Światowi giganci (OVR 92-97) ---
         { name: "Niemcy", code: "GER", tier: 1, strength: 97, worldPoints: 313, euroPoints: 3211 },
         { name: "Szwecja", code: "SWE", tier: 1, strength: 95, worldPoints: 244, euroPoints: 394 },
         { name: "Dania", code: "DEN", tier: 1, strength: 94, worldPoints: 211, euroPoints: 1426 },
         { name: "Francja", code: "FRA", tier: 1, strength: 93, worldPoints: 194, euroPoints: 1728 },
         { name: "Hiszpania", code: "ESP", tier: 1, strength: 91, worldPoints: 165, euroPoints: 1211 },
-        // --- TIER 2: Ścisła czołówka / Aspiranci (OVR 85-89) ---
         { name: "Węgry", code: "HUN", tier: 2, strength: 89, worldPoints: 147, euroPoints: 1278 },
         { name: "Serbia", code: "SRB", tier: 2, strength: 87, worldPoints: 177, euroPoints: 298 },
         { name: "Chorwacja", code: "CRO", tier: 2, strength: 86, worldPoints: 119, euroPoints: 614 },
         { name: "Portugalia", code: "POR", tier: 2, strength: 86, worldPoints: 9, euroPoints: 1035 },
         { name: "Polska", code: "POL", tier: 2, strength: 85, worldPoints: 115, euroPoints: 969 },
         { name: "Norwegia", code: "NOR", tier: 2, strength: 85, worldPoints: 58, euroPoints: 536 },
-        // --- TIER 3: Solidne zespoły europejskie i światowe (OVR 78-84) ---
         { name: "Rosja", code: "RUS", tier: 3, strength: 84, worldPoints: 201, euroPoints: 31 },
         { name: "Rumunia", code: "ROU", tier: 3, strength: 83, worldPoints: 134, euroPoints: 589 },
         { name: "Macedonia Północna", code: "MKD", tier: 3, strength: 82, worldPoints: 17, euroPoints: 610 },
@@ -569,7 +723,6 @@
         { name: "Czechy", code: "CZE", tier: 3, strength: 79, worldPoints: 87.5, euroPoints: 298 },
         { name: "Egipt", code: "EGY", tier: 3, strength: 78, worldPoints: 65, euroPoints: 0 },
         { name: "Austria", code: "AUT", tier: 3, strength: 78, worldPoints: 22, euroPoints: 242 },
-        // --- TIER 4: Uczestnicy i drużyny aspirujące (OVR 70-77) ---
         { name: "Słowacja", code: "SVK", tier: 4, strength: 77, worldPoints: 68.5, euroPoints: 125 },
         { name: "Grecja", code: "GRE", tier: 4, strength: 76, worldPoints: 10, euroPoints: 362 },
         { name: "Bośnia i Hercegowina", code: "BIH", tier: 4, strength: 75, worldPoints: 2, euroPoints: 355 },
@@ -583,7 +736,6 @@
         { name: "Japonia", code: "JPN", tier: 4, strength: 71, worldPoints: 30, euroPoints: 0 },
         { name: "Algieria", code: "ALG", tier: 4, strength: 70, worldPoints: 32, euroPoints: 0 },
         { name: "Katar", code: "QAT", tier: 4, strength: 70, worldPoints: 21, euroPoints: 0 },
-        // --- TIER 5: Drużyny rozwijające się i kopciuszki (OVR 60-69) ---
         { name: "Luksemburg", code: "LUX", tier: 5, strength: 69, worldPoints: 0, euroPoints: 185 },
         { name: "Estonia", code: "EST", tier: 5, strength: 68, worldPoints: 0, euroPoints: 121 },
         { name: "Litwa", code: "LTU", tier: 5, strength: 68, worldPoints: 6, euroPoints: 115 },
@@ -815,7 +967,7 @@
             { name: "Gwardia Koszalin", strength: 63 }, { name: "AZS UW Warszawa", strength: 61 }
         ],
         "Orlen Superliga": [
-            { name: "ORLEN Wisła Płock", strength: 92, cl: true }, { name: "Industria Kielce", strength: 91, cl: true },
+            { name: "ORLEN Wisła Płock", strength: 92 }, { name: "Industria Kielce", strength: 91 },
             { name: "KPR Ostrovia", strength: 76 }, { name: "Wybrzeże Gdańsk", strength: 77 },
             { name: "Chrobry Głogów", strength: 78 }, { name: "MMTS Kwidzyn", strength: 75 },
             { name: "MKS Kalisz", strength: 74 }, { name: "Stal Mielec", strength: 72 },
@@ -851,20 +1003,30 @@
         player.position = posSelect ? posSelect.value : "CTR";
         player.hand = handSelect ? handSelect.value : "prawa";
         player.difficulty = diffSelect ? diffSelect.value : "hard";
-        player.ovr = tierSelect ? parseInt(tierSelect.value) : 48;
+
+        // Punkt startowy to teraz PRZEDZIAŁ (np. "45-49") - losujemy konkretny OVR w jego obrębie
+        let tierRaw = tierSelect ? tierSelect.value : "45-49";
+        let [tierLo, tierHi] = tierRaw.split("-").map(Number);
+        player.ovr = tierLo + Math.floor(Math.random() * (tierHi - tierLo + 1));
         
         document.getElementById('screen-creator').style.display = 'none';
         let offersContainer = document.getElementById('screen-offers');
         offersContainer.style.display = 'block';
 
         let assignedGroup = getIILeagueGroup(player.voivodeship);
+        let iLigaGroup = getILeagueGroup(player.voivodeship);
         let groupList = polishLeaguesData[assignedGroup] || [];
-        let group1BList = polishLeaguesData["I Liga Mężczyzn - Gr. B"] || [];
+        let group1List = polishLeaguesData[iLigaGroup] || [];
         let centralList = polishLeaguesData["Liga Centralna"] || [];
 
         let localTeamObj = groupList[Math.floor(Math.random() * groupList.length)] || {name: "Klub Lokalny", strength: 42};
-        let higherTeamObj = group1BList[Math.floor(Math.random() * group1BList.length)] || {name: "Klub I Ligi", strength: 58};
+        let higherTeamObj = group1List[Math.floor(Math.random() * group1List.length)] || {name: "Klub I Ligi", strength: 58};
         let centralTeamObj = centralList[Math.floor(Math.random() * centralList.length)] || {name: "Klub Centralny", strength: 68};
+
+        // Pensje startowe z losowym wahnięciem, żeby oferty różniły się między nowymi karierami
+        let localSalary = Math.round((1500 * (0.85 + Math.random() * 0.3)) / 50) * 50;
+        let higherSalary = Math.round((3500 * (0.85 + Math.random() * 0.3)) / 50) * 50;
+        let centralSalary = Math.round((6000 * (0.85 + Math.random() * 0.3)) / 50) * 50;
 
         offersContainer.innerHTML = `
             <div class="brand-header">
@@ -877,22 +1039,22 @@
             <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
                 <strong style="font-size:1.05rem;">${localTeamObj.name}</strong>
                 <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">${assignedGroup} (Wysoka szansa na grę)</div>
-                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>1 500 zł / mies.</strong></div>
-                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${localTeamObj.name}', '${assignedGroup}', ${localTeamObj.strength}, 1500)">Podpisz Kontrakt</button>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>${localSalary.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${localTeamObj.name}', '${assignedGroup}', ${localTeamObj.strength}, ${localSalary})">Podpisz Kontrakt</button>
             </div>
 
             <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
                 <strong style="font-size:1.05rem;">${higherTeamObj.name}</strong>
-                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">I Liga Mężczyzn - Gr. B (Średnia szansa)</div>
-                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>3 500 zł / mies.</strong></div>
-                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${higherTeamObj.name}', 'I Liga Mężczyzn - Gr. B', ${higherTeamObj.strength}, 3500)">Podpisz Kontrakt</button>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">${iLigaGroup} (Średnia szansa)</div>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>${higherSalary.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${higherTeamObj.name}', '${iLigaGroup}', ${higherTeamObj.strength}, ${higherSalary})">Podpisz Kontrakt</button>
             </div>
 
             <div style="background:#fff; border:1px solid var(--zprp-border); border-left:4px solid var(--zprp-red); padding:15px; border-radius:6px; margin-bottom:15px;">
                 <strong style="font-size:1.05rem;">${centralTeamObj.name}</strong>
                 <div style="font-size:0.8rem; color:#666; margin-bottom:8px;">Liga Centralna (Niska szansa / Walka)</div>
-                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>6 000 zł / mies.</strong></div>
-                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${centralTeamObj.name}', 'Liga Centralna', ${centralTeamObj.strength}, 6000)">Podpisz Kontrakt</button>
+                <div style="font-size:0.85rem; margin-bottom:8px;"><span>Pensja:</span> <strong>${centralSalary.toLocaleString()} zł / mies.</strong></div>
+                <button class="btn-start-zprp" style="padding:10px; font-size:1rem;" onclick="acceptInitialContract('${centralTeamObj.name}', 'Liga Centralna', ${centralTeamObj.strength}, ${centralSalary})">Podpisz Kontrakt</button>
             </div>
         `;
     }
@@ -1052,11 +1214,13 @@
         let baseTeamOVR = player.teamOVR || leagueBaseOVR;
         let ovrDiff = player.ovr - baseTeamOVR;
         
-        let posMultiplier = (player.position === "GK" || player.position === "CTR") ? 1.5 : 0.7; 
-        let carryMultiplier = player.league.includes("II Liga") ? 1.2 : (player.league.includes("I Liga") ? 0.6 : 0.2);
+        // Pozycja na parkiecie: bramkarz i rozgrywający mają największy wpływ na wynik zespołu.
+        // Usunięto sztuczne dławienie w wyższych ligach — nawet w Superlidze gwiazdor z OVR 99 realnie ciągnie drużynę.
+        let posMultiplier = (player.position === "GK") ? 1.6 : (player.position === "CTR" ? 1.4 : 0.9);
+        let carryMultiplier = 0.55;
 
         let carryBonus = Math.max(0, Math.floor(ovrDiff * carryMultiplier * posMultiplier));
-        let effectiveTeamOVR = baseTeamOVR + carryBonus;
+        let effectiveTeamOVR = Math.min(105, baseTeamOVR + carryBonus);
 
         currentSeasonTable = leagueTeams.map(t => {
             let teamName = typeof t === 'object' ? t.name : t;
@@ -1091,6 +1255,9 @@
             if (seasonStats.finalPos === 1) {
                 player.isChampion = true;
                 setBestAchievement(`Mistrz - ${player.league.split(" (")[0]}`, d.ihfTier === 1 ? 4 : 3);
+            }
+            if (seasonStats.finalPos >= totalTeamsCount - 1) {
+                player.isRelegated = true;
             }
             if (d.ihfTier === 1 && seasonStats.finalPos <= 2) willPlayCLNextYear = true;
             if (d.ihfTier === 2 && seasonStats.finalPos === 1) willPlayCLNextYear = true;
@@ -1158,7 +1325,7 @@
             document.getElementById('screen-tournament-decision').style.display = 'block';
             document.getElementById('tournament-decision-title').innerText = player.pendingTournamentData.tournamentName;
         } else {
-            renderPostSeasonScreen(playedMatches, goals, assists, minutes, oldOvr, player.ovr, trainingMsg + stagnationNote + injuryNote, cupResult, clResult, null);
+            renderPostSeasonScreen(true);
         }
     }
 
@@ -1171,14 +1338,17 @@
         
         let pool = [];
         if (isForeign) {
-            let countryTag = player.league.split("(")[1];
+            let countryTagMatch = player.league.match(/\(([^)]+)\)/);
+            let countryTag = countryTagMatch ? countryTagMatch[1] : "";
             Object.entries(foreignLeaguesData).forEach(([lname, ldata]) => {
-                if (lname.includes("(" + countryTag)) pool.push(...ldata.clubs);
+                if (lname.includes("(" + countryTag + ")")) pool.push(...ldata.clubs);
             });
             if (pool.length === 0) pool = foreignLeaguesData[player.league].clubs; 
         } else {
             Object.values(polishLeaguesData).forEach(leagueArr => pool.push(...leagueArr));
         }
+        // Zabezpieczenie: nigdy nie losujemy własnego klubu jako przeciwnika
+        pool = pool.filter(t => t.name !== player.club);
 
         let teamStrength = (player.teamOVR || 45) + Math.floor((player.ovr - (player.teamOVR || 45)) * 0.6);
         let won = true;
@@ -1220,8 +1390,8 @@
         let won = false;
         let exitStage = "Faza Grupowa";
 
-        let clOpponents = ["Kiel", "SC Magdeburg", "PSG", "Nantes", "FC Barcelona Handbol", "Aalborg", "GOG", "Veszprem", "Szeged", "Sporting"];
-        function getClOpp() { return clOpponents[Math.floor(Math.random() * clOpponents.length)]; }
+        let clOpponents = ["Kiel", "SC Magdeburg", "PSG", "Nantes", "FC Barcelona Handbol", "Aalborg", "GOG", "Veszprem", "Szeged", "Sporting"].filter(n => n !== player.club);
+        function getClOpp() { return clOpponents[Math.floor(Math.random() * clOpponents.length)] || "Rywal Europejski"; }
 
         let clAvgGrpStrength = 85;
         let pts = 0;
@@ -1275,7 +1445,9 @@
         player.national.role = roleTier;
 
         let windowMatches = (roleTier === "Kadra A (Seniorzy)") ? (2 + Math.floor(Math.random() * 3)) : 2;
-        let windowGoals = Math.floor(Math.random() * windowMatches * 4);
+        // Bramki w oknie kadrowym skalowane realnie do OVR zawodnika (spójne dla U19/U21/A)
+        let goalsPerMatch = Math.max(0, Math.floor(player.ovr * 0.07) + Math.floor(Math.random() * 3) - 1);
+        let windowGoals = goalsPerMatch * windowMatches;
         
         let data = { roleTier, windowMatches, windowGoals, isMajorTournament: false, tournamentName: "" };
 
@@ -1288,6 +1460,11 @@
                 data.tournamentName = "IHF World Championship " + player.currentYear;
             }
         }
+
+        // Mecze eliminacyjne liczą się do statystyk od razu; ewentualny wielki turniej doliczy swoje osobno w resolveTournament()
+        player.national.caps += windowMatches;
+        player.national.goals += windowGoals;
+
         return data;
     }
 
@@ -1427,8 +1604,9 @@
             let pd = player.pendingTournamentData;
             repHtml = `<div style="background:var(--zprp-gray); border:1px solid var(--zprp-border); padding:15px; margin-bottom:15px; border-radius:4px;">
                 <div style="font-family:'Oswald'; text-transform:uppercase; margin-bottom:5px;">🇵🇱 Reprezentacja Polski (${pd.roleTier})</div>
-                <p style="font-size:0.85rem; margin:0; color:#555;">Zagrałeś w oknie: ${pd.windowMatches} meczów, rzucając ${pd.windowGoals} bramek.</p>
-                ${pd.tournamentResultMsg ? `<div style="margin-top:5px; padding:8px; background:#eef5ff; border-left:3px solid #005a9c; font-size:0.8rem;">${pd.tournamentResultMsg}</div>` : ""}
+                ${pd.tournamentResultMsg
+                    ? `<div style="margin-top:5px; padding:8px; background:#eef5ff; border-left:3px solid #005a9c; font-size:0.8rem;">${pd.tournamentResultMsg}</div>`
+                    : `<p style="font-size:0.85rem; margin:0; color:#555;">Okienko eliminacyjne: ${pd.windowMatches} mecze, ${pd.windowGoals} bramek.</p>`}
             </div>`;
         }
 
@@ -1440,15 +1618,29 @@
             </div>`;
         }
 
-        let pendingEvent = eventsDatabase[Math.floor(Math.random() * eventsDatabase.length)];
+        // Filtrowanie wydarzeń (np. Pięcioraczki tylko jeśli wiek > 30 i ovr < 65)
+        let availableEvents = eventsDatabase.filter(e => {
+            if (e.id === "piecioraczki") return (player.age >= 30 && player.ovr < 65);
+            return true;
+        });
+        // System rotacji: nie powtarzamy wydarzenia, dopóki nie „wyczerpiemy" puli dostępnych na ten moment kariery
+        let notYetSeen = availableEvents.filter(e => !usedEventIds.includes(e.id));
+        if (notYetSeen.length === 0) {
+            usedEventIds = []; // wszystkie obejrzane - zaczynamy nową rundę rotacji
+            notYetSeen = availableEvents;
+        }
+        let pendingEvent = notYetSeen[Math.floor(Math.random() * notYetSeen.length)];
+        usedEventIds.push(pendingEvent.id);
+        let evtIdx = eventsDatabase.findIndex(e => e.id === pendingEvent.id);
+
         let decisionHtml = `
             <div class="decision-box">
                 <div style="font-size:0.75rem; text-transform:uppercase; font-weight:bold; color:var(--zprp-red);">Wydarzenie Losowe w Twoim Życiu</div>
                 <div style="font-family:'Oswald'; font-size:1.1rem; margin:5px 0;">${pendingEvent.title}</div>
                 <p style="font-size:0.85rem; margin-bottom:10px;">${pendingEvent.desc}</p>
                 <div id="event-buttons-container">
-                    <button class="decision-btn" onclick="resolveRandomEvent(${eventsDatabase.indexOf(pendingEvent)}, 1)"><strong>${pendingEvent.opt1.label}</strong></button>
-                    <button class="decision-btn" onclick="resolveRandomEvent(${eventsDatabase.indexOf(pendingEvent)}, 2)"><strong>${pendingEvent.opt2.label}</strong></button>
+                    <button class="decision-btn" onclick="resolveRandomEvent(${evtIdx}, 1)"><strong>${pendingEvent.opt1.label}</strong></button>
+                    <button class="decision-btn" onclick="resolveRandomEvent(${evtIdx}, 2)"><strong>${pendingEvent.opt2.label}</strong></button>
                 </div>
                 <div id="event-result-msg" style="display:none; font-weight:bold; font-size:0.85rem; margin-top:10px; color:var(--zprp-red);"></div>
             </div>`;
@@ -1491,6 +1683,20 @@
         resDiv.style.display = 'block';
         resDiv.innerHTML = `Decyzja podjęta: <span style="color:#333; font-weight:normal;">${outcomeMsg}</span>`;
         
+        // Zabezpieczenie końca kariery (Pięcioraczki itp.)
+        if (player.forceRetire) {
+            document.getElementById('league-table-slot').innerHTML = `
+                <div style="background:#000; color:#fff; padding:20px; text-align:center; margin-top:20px; border-radius:4px;">
+                    <h2 style="color:var(--zprp-red); margin-top:0;">KONIEC KARIERY</h2>
+                    <p style="font-size:0.9rem;">To wydarzenie zakończyło Twoją przygodę ze sportem.</p>
+                    <button class="btn-start-zprp" style="background:#fff; color:#000; width:auto; padding:10px 30px;" onclick="showCareerSummary()">ZOBACZ PODSUMOWANIE</button>
+                </div>
+            `;
+            document.getElementById('league-table-slot').style.display = 'block';
+            updateSidebar();
+            return;
+        }
+
         document.getElementById('league-table-slot').style.display = 'block';
         updateSidebar();
     }
@@ -1511,12 +1717,22 @@
             }
         }
         let extra = Math.max(0, (ovr - 55) * mult);
-        return Math.floor(base + extra);
+        let raw = base + extra;
+        // Losowe wahnięcie +/- 12%, żeby oferty nie były identyczne sezon po sezonie
+        let jitter = 0.88 + Math.random() * 0.24;
+        return Math.round((raw * jitter) / 50) * 50;
+    }
+
+    // Region -> właściwa grupa I Ligi (spójne z awansem z II ligi w openTransferMarket)
+    function getILeagueGroup(voiv) {
+        if (["pomorskie", "kujawsko-pomorskie", "warmińsko-mazurskie", "zachodniopomorskie"].includes(voiv)) return "I Liga Mężczyzn - Gr. A";
+        if (["dolnośląskie", "opolskie", "wielkopolskie", "lubuskie"].includes(voiv)) return "I Liga Mężczyzn - Gr. B";
+        if (["mazowieckie", "lubelskie", "podlaskie", "łódzkie"].includes(voiv)) return "I Liga Mężczyzn - Gr. C";
+        return "I Liga Mężczyzn - Gr. D"; // śląskie, małopolskie, świętokrzyskie, podkarpackie
     }
 
     function openTransferMarket() {
         document.getElementById('subscreen-preseason').style.display = 'none';
-        
         document.getElementById('subscreen-postseason').style.display = 'none';
         document.getElementById('panel-main-title').innerText = "Rynek Transferowy i Awansy";
         document.getElementById('panel-season-title').innerText = "OKNO LETNIE • WIEK: " + player.age;
@@ -1548,7 +1764,7 @@
             } else if (player.isRelegated) {
                 let lowerLeague = Object.keys(foreignLeaguesData).find(l => l.includes(`(${countryTag})`) && foreignLeaguesData[l].ihfTier === currentTier + 1);
                 if (lowerLeague) currentResolvedLeague = lowerLeague;
-                else player.isRelegated = false; // Brak niższej ligi
+                else player.isRelegated = false; 
             }
         } else {
             if (player.isChampion) {
@@ -1712,10 +1928,53 @@
         document.getElementById('stat-minutes').innerText = "0";
     }
 
+    function getCareerEpitaph() {
+        let t = player.bestAchievementTier;
+        let g = player.careerStats.goals;
+        let caps = player.national.caps;
+
+        if (t >= 5) {
+            return {
+                headline: "LEGENDA EUROPEJSKICH PARKIETÓW",
+                text: `Niewielu Polaków może pochwalić się tym, czego dokonałeś. Triumf w Lidze Mistrzów EHF trafi do podręczników historii polskiej piłki ręcznej. Media będą o Tobie pisać jeszcze długo po zawieszeniu butów na kołku, a młodzi zawodnicy będą chcieli być „następnym ${player.name.split(" ")[0]}”.`
+            };
+        }
+        if (t >= 4) {
+            return {
+                headline: "IKONA REPREZENTACJI",
+                text: `Medal wielkiej imprezy z Biało-Czerwonymi na piersi to coś, czego nie da się kupić. Rzuciłeś ${g} bramek w klubowej karierze, ale to właśnie chwile w kadrze narodowej zapamiętają kibice najdłużej. Twoje nazwisko na zawsze zostanie wpisane w historię reprezentacji.`
+            };
+        }
+        if (t >= 3) {
+            return {
+                headline: "MISTRZ KRAJU",
+                text: `Tytuł mistrzowski to ukoronowanie solidnej, wymagającej kariery. ${caps > 0 ? `Do tego ${caps} występów w kadrze pokazuje, że byłeś liczącym się zawodnikiem na krajowej scenie.` : "Twoja droga do tytułu była pełna wyrzeczeń i ciężkiej pracy."} Kibice będą wspominać Cię jako zawodnika, który potrafił wygrywać, gdy było to najważniejsze.`
+            };
+        }
+        if (t >= 2) {
+            return {
+                headline: "SZANOWANY WETERAN PARKIETU",
+                text: `Puchar w gablocie i ${g} bramek w karierze klubowej to dorobek, którego nie musisz się wstydzić. Nie zostałeś może gwiazdą pierwszej wielkości, ale w każdej szatni, w której grałeś, byłeś zawodnikiem, na którym można było polegać.`
+            };
+        }
+        if (g > 1500 || caps > 20) {
+            return {
+                headline: "PRACOWITY ŻOŁNIERZ SZCZYPIORNIAKA",
+                text: `Bez wielkich tytułów, za to z ogromnym sercem do gry. ${g} bramek rzuconych przez lata kariery to dowód na to, że regularność i zaangażowanie potrafią zbudować szacunek — nawet bez błyszczących trofeów.`
+            };
+        }
+        return {
+            headline: "KARIERA NA WŁASNYCH ZASADACH",
+            text: `Twoja przygoda ze szczypiorniakiem nie zapisała się złotymi zgłoskami w historii sportu, ale każda minuta na parkiecie była Twoim wyborem. Nie każdy musi zostać mistrzem — czasem wystarczy po prostu kochać grę do samego końca.`
+        };
+    }
+
     function showCareerSummary() {
         document.getElementById('game-layout').style.display = 'none';
         let sumScreen = document.getElementById('screen-summary');
         sumScreen.style.display = 'block';
+
+        let epitaph = getCareerEpitaph();
         
         document.getElementById('retirement-stats').innerHTML = `
             <div class="stats-grid">
@@ -1725,6 +1984,10 @@
                 <div class="stat-box"><div class="label">Zarobki Życia</div><div class="val" style="font-size:0.9rem;">${player.totalEarned.toLocaleString()} zł</div></div>
             </div>
             <div style="text-align:center; margin-top:15px; font-weight:bold; font-size:1.2rem;">Kluczowy sukces: <span style="color:var(--zprp-red);">${player.bestAchievement}</span></div>
+            <div style="background: var(--zprp-gray); border: 1px solid var(--zprp-border); border-left: 4px solid var(--zprp-red); padding: 15px; margin-top: 15px; border-radius: 4px;">
+                <div style="font-family:'Oswald'; text-transform:uppercase; font-size:1.05rem; color:var(--zprp-red); margin-bottom:6px;">${epitaph.headline}</div>
+                <p style="font-size:0.9rem; margin:0; color:#444; line-height:1.5;">${epitaph.text}</p>
+            </div>
         `;
         document.getElementById('retirement-history').innerHTML = historyLog.join('<hr style="border:0; border-top:1px dotted #ccc; margin:8px 0;">');
     }
